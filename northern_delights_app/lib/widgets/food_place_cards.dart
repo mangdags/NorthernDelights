@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:northern_delights_app/pages/foodplace_info.dart';
+import 'package:northern_delights_app/screens/foodplace_info.dart';
 
 class FoodPlaceCards extends StatelessWidget {
   const FoodPlaceCards({

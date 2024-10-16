@@ -3,9 +3,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:northern_delights_app/widgets/food_place_cards.dart';
 import 'package:northern_delights_app/widgets/category_button.dart';
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
-
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -126,15 +126,7 @@ class HomePage extends StatelessWidget {
                 ),
               ],
             ),
-            CategoryButton(),  
-            // Row(
-            //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            //   children: [
-            //     buildCategoryButton('Most Viewed', Colors.black, Colors.white),
-            //     buildCategoryButton('Nearby', Color(0xFFFBFBFB), Color(0xFFC5C5C5)),
-            //     buildCategoryButton('Latest', Color(0xFFFBFBFB), Color(0xFFC5C5C5)),
-            //   ],
-            // ),
+            CategoryButton(), 
 
             const SizedBox(height: 20),
             // Limit the height of the ListView to prevent overflow

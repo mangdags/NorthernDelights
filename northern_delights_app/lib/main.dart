@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:northern_delights_app/pages/home.dart';
+import 'package:northern_delights_app/screens/home_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,7 +20,11 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.white,
         useMaterial3: true,
       ),
-      home: HomePage(),
+      home: HomeScreen(),
+      // initialRoute: 'home_screen',
+      // routes: {
+      //   'home_screen': (context) => HomeScreen(),
+      // }
     );
   }
 }

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "159418309151",
+    "project_id": "northern-delights-2cadf",
+    "storage_bucket": "northern-delights-2cadf.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:159418309151:android:7e80f94ce85fe9b981132a",
+        "android_client_info": {
+          "package_name": "com.mangdags.northern_delights_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAKdyiLyS2zIdX09GxVReXFJgNtIMcng7Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 class FoodplaceInfo extends StatelessWidget {
   const FoodplaceInfo({super.key});
@@ -147,7 +148,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                       'assets/icons/location-pin.svg',
                       height: 20,
                       width: 20,
-                      color: Colors.white70,
+                      colorFilter: ColorFilter.mode(Colors.white60, BlendMode.srcIn),
                     ),
                     const SizedBox(width: 5),
                     Text(
@@ -163,7 +164,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                 Row(
                   children: [
                     SvgPicture.asset('assets/icons/heart-filled.svg', 
-                      color: Colors.white70,
+                      colorFilter: ColorFilter.mode(Colors.white70, BlendMode.srcIn),
                       height: 20,
                       width: 20,  
                     ),
@@ -194,7 +195,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                   'assets/icons/back_2.svg',
                   height: 24,
                   width: 24,
-                  color: Colors.white60,
+                  colorFilter: ColorFilter.mode(Colors.white60, BlendMode.srcIn),
                 ),
               ),
               onTap: () {
@@ -219,7 +220,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                   child: SvgPicture.asset('assets/icons/heart-empty.svg',
                   height: 30,
                   width: 30,
-                  color: Colors.white60,
+                  colorFilter: ColorFilter.mode(Colors.white60, BlendMode.srcIn),
                   ),
                 ),
               ),

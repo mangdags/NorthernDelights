@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:northern_delights_app/models/foodplace_doc_data.dart';
 import 'package:northern_delights_app/screens/foodplace_info.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 class FoodPlaceCards extends StatelessWidget {
   const FoodPlaceCards({
@@ -13,6 +15,7 @@ class FoodPlaceCards extends StatelessWidget {
   final AssetImage foodCardImage; //Image
   final String foodCardTitle; //Title
   final String foodCardLocation; //Title
+
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +77,7 @@ class FoodPlaceCards extends StatelessWidget {
                             'assets/icons/location-pin.svg',
                             height: 20, // Adjust height as needed
                             width: 20, // Adjust width as needed
-                            color: Colors.white54,
+                            colorFilter: ColorFilter.mode(Colors.white54, BlendMode.srcIn),
                           ),
                           const SizedBox(width: 5),
                           Text(

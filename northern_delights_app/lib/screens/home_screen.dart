@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:northern_delights_app/models/foodplace_doc_data.dart';
-import 'package:northern_delights_app/widgets/food_place_cards.dart';
+import 'package:northern_delights_app/models/gastropub_doc_data.dart';
+import 'package:northern_delights_app/widgets/gastropub_card.dart';
 import 'package:northern_delights_app/widgets/category_button.dart';
 import 'package:firebase_core/firebase_core.dart';
 
@@ -13,35 +13,34 @@ class HomeScreen extends StatelessWidget {
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
-          title: Text(
-            'Northern Delights',
-            style: TextStyle(
-              color: const Color.fromARGB(255, 255, 255, 255),
-              fontSize: 35,
-              fontWeight: FontWeight.bold
+          title: Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Northern',
+                  style: TextStyle(
+                    color: const Color.fromARGB(255, 255, 255, 255),
+                    fontSize: 35,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: 'Roboto'
+                  ),
+                ),
+                Text(
+                  ' Delights',
+                  style: TextStyle(
+                      color: const Color.fromARGB(255, 255, 255, 255),
+                      fontSize: 35,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Montez'
+                  ),
+                ),
+              ],
             ),
           ),
           centerTitle: false,
           backgroundColor: const Color.fromARGB(255, 0, 85, 255),
           elevation: 0.0,
-          actions: [
-            GestureDetector(
-              child: Container(
-                alignment: Alignment.center,
-                width: 55,
-                decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 0, 85, 255),
-                    borderRadius: BorderRadius.circular(10)),
-                child: SvgPicture.asset(
-                  'assets/icons/profile-circle.svg',
-                  height: 40,
-                  width: 40,
-                  colorFilter: ColorFilter.mode(Colors.white60, BlendMode.srcIn),
-                ),
-              ),
-              onTap: () {},
-            ),
-          ],
         ),
         body: SingleChildScrollView(
           child: Padding(
@@ -97,80 +96,48 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                Row(
-                  children: [
-                    Container(
-                      margin: EdgeInsets.only(top: 20, left: 20, bottom: 10),
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Popular Gastropubs',
-                        textAlign: TextAlign.start,
-                        softWrap: false,
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Container(
-                        margin: EdgeInsets.only(top: 20, left: 20, right: 20, bottom: 10),
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          'View All',
-                          textAlign: TextAlign.start,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.black45,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                const SizedBox(height: 30,),
+
                 CategoryButton(), 
                 
-                const SizedBox(height: 20),
+                const SizedBox(height: 30),
                 // Limit the height of the ListView to prevent overflow
                 SizedBox(
-                  height: 390, // Set a fixed height for the horizontal list
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: [
-                      ShowFoodPlace(
-                        foodCardImage: AssetImage('assets/images/empanada.jpg'),
-                        foodCardTitle: 'Empanada Ilocos',
-                        foodCardLocation: 'Bantay, Ilocos Sur',  
-                      ),
-                      const SizedBox(width: 20),
-                      ShowFoodPlace(
-                        foodCardImage: AssetImage('assets/images/empanada_2.jpg'),
-                        foodCardTitle: 'Vigan Empanadahan',
-                        foodCardLocation: 'Vigan City',
-                      ),
-                      const SizedBox(width: 20),
-                      ShowFoodPlace(
-                        foodCardImage: AssetImage('assets/images/empanada_2.jpg'),
-                        foodCardTitle: 'Vigan Empanada',
-                        foodCardLocation: 'Vigan City',
-                      ),
-                      const SizedBox(width: 20),
-                      ShowFoodPlace(
-                        foodCardImage: AssetImage('assets/images/empanada_2.jpg'),
-                        foodCardTitle: 'Vigan Empands',
-                        foodCardLocation: 'Vigan Ilocos Sur',
-                      ),
-                    ],
-                  ),
+                  height: 350, // Set a fixed height for the horizontal list
+                  child: GastropubCards(),
                 ),
 
-                GastropubDocData(),
               ],
             ),
           ),
         ),
+        bottomNavigationBar:
+          BottomNavigationBar(
+            backgroundColor: Colors.blue,
+            items: const <BottomNavigationBarItem>[
+              BottomNavigationBarItem(
+                backgroundColor: Colors.blue,
+                icon: Icon(Icons.home),
+                label: 'Home',
+              ),
+              BottomNavigationBarItem(
+                backgroundColor: Colors.blue,
+                icon: Icon(Icons.history),
+                label: 'Recent',
+              ),
+              BottomNavigationBarItem(
+                backgroundColor: Colors.blue,
+                icon: Icon(Icons.bookmark),
+                label: 'Liked',
+              ),
+              BottomNavigationBarItem(
+                backgroundColor: Colors.blue,
+                icon: Icon(Icons.account_circle_rounded),
+                label: 'Profile',
+              ),
+            ],
+          ),
+
       ),
     );
   }
@@ -219,31 +186,4 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-
-class ShowFoodPlace extends StatelessWidget {
-  final AssetImage foodCardImage;
-  final String foodCardTitle;
-  final String foodCardLocation;
-
-  const ShowFoodPlace({
-    required this.foodCardImage,
-    required this.foodCardTitle,
-    required this.foodCardLocation,
-    super.key,
-    });
-
-  @override
-  Widget build(BuildContext context) {
-    return FoodPlaceCards(
-      foodCardImage: foodCardImage,
-      foodCardTitle: foodCardTitle,
-      foodCardLocation: foodCardLocation,
-    );
-  }
-}
-
-void getGastropubs(){
-
 }

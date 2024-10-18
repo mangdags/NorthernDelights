@@ -2,10 +2,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:northern_delights_app/screens/home_screen.dart';
 
-import 'models/foodplace_doc_data.dart';
+import 'models/gastropub_doc_data.dart';
 
-
-GastropubDocData foodPlaceDocData = GastropubDocData();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

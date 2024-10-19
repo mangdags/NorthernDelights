@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:northern_delights_app/models/gastropub_doc_data.dart';
 import 'package:northern_delights_app/widgets/gastropub_card.dart';
 import 'package:northern_delights_app/widgets/category_button.dart';
-import 'package:firebase_core/firebase_core.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});

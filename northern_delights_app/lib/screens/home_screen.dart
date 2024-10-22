@@ -1,11 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:northern_delights_app/widgets/gastropub_card.dart';
+import 'package:northern_delights_app/widgets/restaurant_card.dart';
 import 'package:northern_delights_app/widgets/category_button.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
-  
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  // State to track the currently selected category
+  String _selectedCategory = 'Most Viewed'; // Default category
+
+  // Method to update the selected category when a button is pressed
+  void _onCategorySelected(String category) {
+    setState(() {
+      _selectedCategory = category;
+    });
+  }
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -54,13 +69,6 @@ class HomeScreen extends StatelessWidget {
                     fontSize: 25,
                   ),
                 ),
-                Text(
-                  'Looking for gastropub',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 15,
-                  ),
-                ),
                 Column(
                   children: [
                     Container(
@@ -96,15 +104,42 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 30,),
 
-                CategoryButton(), 
-                
-                const SizedBox(height: 30),
-                // Limit the height of the ListView to prevent overflow
-                SizedBox(
-                  height: 350, // Set a fixed height for the horizontal list
-                  child: GastropubCards(),
+                CategoryButton(
+                  onCategorySelected: _onCategorySelected, // Pass the callback
+                  selectedCategory: _selectedCategory, // Pass the current state
                 ),
 
+                const SizedBox(height: 20),
+                // Limit the height of the ListView to prevent overflow
+                const Text('Gastropub',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontFamily: 'Roboto',
+                    fontWeight: FontWeight.w700,
+                  )),
+
+                const SizedBox(height: 20),
+
+                SizedBox(
+                  height: 320, // Set a fixed height for the horizontal list
+                  child: GastropubCards(selectedCategory: _selectedCategory,),
+                ),
+
+                SizedBox(height: 5,),
+
+                Text('Restaurants',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontFamily: 'Roboto',
+                    fontWeight: FontWeight.w700,
+                  )),
+
+                const SizedBox(height: 10,),
+
+                SizedBox(
+                  height: 320, // Set a fixed height for the horizontal list
+                  child: RestaurantsCard(selectedCategory: _selectedCategory,),
+                ),
               ],
             ),
           ),
@@ -139,7 +174,7 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
-  
+
  Widget buildCategoryButton(String label, Color bgColor, Color textColor) {
   return ElevatedButton(
     style: ButtonStyle(

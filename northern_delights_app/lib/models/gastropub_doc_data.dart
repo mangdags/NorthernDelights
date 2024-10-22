@@ -28,14 +28,33 @@ class GastropubMostViewed {
       }).toList();
     });
   }
+
+}
+
+class GastropubLatestAdded {
+  Stream<List<Map<String, dynamic>>> getGastropubLatestAdded() {
+    return FirebaseFirestore.instance
+        .collection('gastropubs')
+        .orderBy('gastro_date_added', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        var data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id; // Attach the document ID to the data
+        return data;
+      }).toList();
+    });
+  }
+
 }
 
 class GastropubService {
   Stream<List<Map<String, dynamic>>> getStream(String filter) {
-    switch (filter) {
-      case 'mostViewed':
+    switch (filter.trim()) {
+      case 'Most Viewed':
         return GastropubMostViewed().getGastropubMostViewed();
-      case 'allUnsorted':
+      case 'Latest':
+        return GastropubLatestAdded().getGastropubLatestAdded();
       default:
         return GastropubAllUnsorted().getGastropubData();
     }

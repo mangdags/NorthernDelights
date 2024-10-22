@@ -4,14 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:northern_delights_app/models/gastropub_doc_data.dart';
 
+import 'direction_screen.dart';
+
 class GastropubInfo extends StatefulWidget {
   const GastropubInfo({
     required this.gastropubID,
+    required this.lat,
+    required this.long,
     super.key,
   });
 
   final String gastropubID;
-
+  final double lat;
+  final double long;
   @override
   _GastropubInfoState createState() => _GastropubInfoState();
 }
@@ -35,6 +40,8 @@ class _GastropubInfoState extends State<GastropubInfo> {
       }
     });
     _incrementViewCount();
+
+    print("Long: ${widget.long}Lat: ${widget.lat}");
   }
 
   // For adding view count
@@ -76,10 +83,10 @@ class _GastropubInfoState extends State<GastropubInfo> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         TextButton(
-                          onPressed: () {},
+                          onPressed: () { },
                           style: ButtonStyle(
-                            foregroundColor: MaterialStateProperty.all(Colors.black),
-                            textStyle: MaterialStateProperty.all(
+                            foregroundColor: WidgetStateProperty.all(Colors.black),
+                            textStyle: WidgetStateProperty.all(
                               TextStyle(fontSize: 20),
                             ),
                           ),
@@ -88,8 +95,8 @@ class _GastropubInfoState extends State<GastropubInfo> {
                         TextButton(
                           onPressed: () {},
                           style: ButtonStyle(
-                            foregroundColor: MaterialStateProperty.all(Colors.black45),
-                            textStyle: MaterialStateProperty.all(
+                            foregroundColor: WidgetStateProperty.all(Colors.black45),
+                            textStyle: WidgetStateProperty.all(
                               TextStyle(fontSize: 18),
                             ),
                           ),
@@ -98,8 +105,8 @@ class _GastropubInfoState extends State<GastropubInfo> {
                         TextButton(
                           onPressed: () {},
                           style: ButtonStyle(
-                            foregroundColor: MaterialStateProperty.all(Colors.black45),
-                            textStyle: MaterialStateProperty.all(
+                            foregroundColor: WidgetStateProperty.all(Colors.black45),
+                            textStyle: WidgetStateProperty.all(
                               TextStyle(fontSize: 18),
                             ),
                           ),
@@ -108,8 +115,8 @@ class _GastropubInfoState extends State<GastropubInfo> {
                         TextButton(
                           onPressed: () {},
                           style: ButtonStyle(
-                            foregroundColor: MaterialStateProperty.all(Colors.black45),
-                            textStyle: MaterialStateProperty.all(
+                            foregroundColor: WidgetStateProperty.all(Colors.black45),
+                            textStyle: WidgetStateProperty.all(
                               TextStyle(fontSize: 18),
                             ),
                           ),
@@ -154,7 +161,12 @@ class _GastropubInfoState extends State<GastropubInfo> {
       child: SizedBox(
         width: (double.infinity) - 100,
         child: ElevatedButton(
-          onPressed: () {},
+          onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => DirectionsMapScreen(destinationLong: widget.long, destinationLat: widget.lat, )),
+              );
+            },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.black, // Change background color
             padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 24.0), // Change padding

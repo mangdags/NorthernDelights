@@ -5,59 +5,42 @@ import 'package:northern_delights_app/models/gastropub_doc_data.dart';
 import 'package:northern_delights_app/screens/gastropub_info_screen.dart';
 
 class GastropubCards extends StatefulWidget {
+    final String selectedCategory; // Accept selected category as a parameter
+
+    const GastropubCards({super.key, required this.selectedCategory});
+
     @override
     _GastropubCardsState createState() => _GastropubCardsState();
 }
 
 class _GastropubCardsState extends State<GastropubCards> {
     final GastropubService gastropubService = GastropubService();
-    String _filter = 'allUnsorted'; // Default filter
 
     @override
     Widget build(BuildContext context) {
         return Column(
             children: [
-                // Buttons to switch between filters
-                Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                        ElevatedButton(
-                            onPressed: () {
-                                setState(() {
-                                    _filter = 'allUnsorted';
-                                });
-                            },
-                            child: Text('Unsorted'),
-                        ),
-                        SizedBox(width: 16),
-                        ElevatedButton(
-                            onPressed: () {
-                                setState(() {
-                                    _filter = 'mostViewed';
-                                });
-                            },
-                            child: Text('Most Viewed'),
-                        ),
-                    ],
-                ),
-                SizedBox(height: 16),
-
-                // StreamBuilder to dynamically fetch data
                 StreamBuilder<List<Map<String, dynamic>>>(
-                    stream: gastropubService.getStream(_filter),
+                    // Update the stream based on the selected category
+                    stream: gastropubService.getStream(widget.selectedCategory),
                     builder: (context, snapshot) {
                         if (!snapshot.hasData) {
                             return Center(child: CircularProgressIndicator());
                         }
 
                         var gastropubList = snapshot.data!.map((gastropub) {
+
+                            String coordinates = gastropub['gastro_geopoint'].toString();
+                            List<String> latLng = coordinates.split(", ");
                             return GestureDetector(
                                 onTap: () {
                                     Navigator.push(
                                         context,
                                         MaterialPageRoute(
                                             builder: (context) => GastropubInfo(
-                                                gastropubID: gastropub['id'], // Pass the document ID
+                                                gastropubID: gastropub['id'],
+                                                lat: double.parse(latLng[0]),
+                                                long: double.parse(latLng[1]),
                                             ),
                                         ),
                                     );
@@ -67,15 +50,13 @@ class _GastropubCardsState extends State<GastropubCards> {
                                     children: [
                                         Stack(
                                             children: [
-                                                // Image container
                                                 Container(
                                                     decoration: BoxDecoration(
-                                                        borderRadius: const BorderRadius.all(
-                                                            Radius.circular(20)), // Rounded edges
+                                                        borderRadius: BorderRadius.all(Radius.circular(20)),
                                                         boxShadow: [
                                                             BoxShadow(
                                                                 color: Colors.black.withOpacity(0.2),
-                                                                offset: const Offset(0.0, 4),
+                                                                offset: Offset(0.0, 4),
                                                                 blurRadius: 8,
                                                                 spreadRadius: 1,
                                                             ),
@@ -93,7 +74,7 @@ class _GastropubCardsState extends State<GastropubCards> {
                                                                     width: 220,
                                                                     height: 300,
                                                                     alignment: Alignment.center,
-                                                                    child: const Icon(
+                                                                    child: Icon(
                                                                         Icons.error,
                                                                         size: 220,
                                                                         color: Colors.red,
@@ -103,7 +84,6 @@ class _GastropubCardsState extends State<GastropubCards> {
                                                         ),
                                                     ),
                                                 ),
-                                                // Overlay box with information
                                                 Positioned(
                                                     bottom: 10,
                                                     left: 5,
@@ -112,7 +92,7 @@ class _GastropubCardsState extends State<GastropubCards> {
                                                         child: BackdropFilter(
                                                             filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
                                                             child: Container(
-                                                                padding: const EdgeInsets.all(10),
+                                                                padding: EdgeInsets.all(10),
                                                                 width: 210,
                                                                 height: 90,
                                                                 decoration: BoxDecoration(
@@ -126,7 +106,7 @@ class _GastropubCardsState extends State<GastropubCards> {
                                                                             gastropub['gastro_name'],
                                                                             maxLines: 1,
                                                                             overflow: TextOverflow.ellipsis,
-                                                                            style: const TextStyle(
+                                                                            style: TextStyle(
                                                                                 color: Colors.white,
                                                                                 fontSize: 16,
                                                                                 fontWeight: FontWeight.bold,
@@ -138,39 +118,39 @@ class _GastropubCardsState extends State<GastropubCards> {
                                                                                     'assets/icons/location-pin.svg',
                                                                                     height: 20,
                                                                                     width: 20,
-                                                                                    colorFilter: const ColorFilter.mode(
+                                                                                    colorFilter: ColorFilter.mode(
                                                                                         Colors.white70, BlendMode.srcIn),
                                                                                 ),
-                                                                                const SizedBox(width: 5),
+                                                                                SizedBox(width: 5),
                                                                                 Text(
                                                                                     gastropub['gastro_location'],
-                                                                                    style: const TextStyle(
+                                                                                    style: TextStyle(
                                                                                         color: Colors.white70,
                                                                                         fontSize: 12,
                                                                                     ),
                                                                                 ),
                                                                             ],
                                                                         ),
-                                                                        const SizedBox(height: 3),
+                                                                        SizedBox(height: 3),
                                                                         Row(
                                                                             children: [
                                                                                 SvgPicture.asset(
                                                                                     'assets/icons/star.svg',
                                                                                     height: 15,
                                                                                     width: 15,
-                                                                                    colorFilter: const ColorFilter.mode(
+                                                                                    colorFilter: ColorFilter.mode(
                                                                                         Colors.white70, BlendMode.srcIn),
                                                                                 ),
-                                                                                const SizedBox(width: 8),
+                                                                                SizedBox(width: 8),
                                                                                 Text(
                                                                                     gastropub['gastro_rating'].toString(),
-                                                                                    style: const TextStyle(
+                                                                                    style: TextStyle(
                                                                                         color: Colors.white70,
                                                                                         fontSize: 12,
                                                                                     ),
                                                                                 ),
                                                                             ],
-                                                                        )
+                                                                        ),
                                                                     ],
                                                                 ),
                                                             ),
@@ -185,11 +165,11 @@ class _GastropubCardsState extends State<GastropubCards> {
                         }).toList();
 
                         return SizedBox(
-                            height: 400,
+                            height: 320,
                             child: ListView(
                                 scrollDirection: Axis.horizontal,
                                 children: gastropubList.map((item) => Padding(
-                                    padding: const EdgeInsets.only(right: 25.0),
+                                    padding: EdgeInsets.only(right: 25.0),
                                     child: item,
                                 )).toList(),
                             ),

@@ -1,10 +1,9 @@
 import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:northern_delights_app/models/gastropub_doc_data.dart';
 import 'package:northern_delights_app/screens/direction_screen.dart';
-import 'package:northern_delights_app/screens/map_screen.dart';
+
+String? restoName;
 
 class RestaurantInfo extends StatefulWidget {
   const RestaurantInfo({
@@ -22,9 +21,8 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
   final ScrollController _scrollController = ScrollController();
   bool _showCircularButton = false;
 
-  GeoPoint geoPoint = resto['resto_geopoint'];
-  double lat = geoPoint.latitude;
-  double long = geoPoint.longitude;
+  double? restoLat;
+  double? restoLong;
 
   @override
   void initState() {
@@ -59,9 +57,11 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
 
   // Function to update restaurant coordinates
   void _updateCoordinates(double lat, double long) {
-    setState(() {
-      restoLat = lat;
-      restoLong = long;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        restoLat = lat;
+        restoLong = long;
+      });
     });
   }
 
@@ -98,7 +98,8 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
                         TextButton(
                           onPressed: () {},
                           style: ButtonStyle(
-                            foregroundColor: MaterialStateProperty.all(Colors.black),
+                            foregroundColor:
+                            MaterialStateProperty.all(Colors.black),
                             textStyle: MaterialStateProperty.all(
                               TextStyle(fontSize: 20),
                             ),
@@ -108,7 +109,8 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
                         TextButton(
                           onPressed: () {},
                           style: ButtonStyle(
-                            foregroundColor: MaterialStateProperty.all(Colors.black45),
+                            foregroundColor:
+                            MaterialStateProperty.all(Colors.black45),
                             textStyle: MaterialStateProperty.all(
                               TextStyle(fontSize: 18),
                             ),
@@ -118,7 +120,8 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
                         TextButton(
                           onPressed: () {},
                           style: ButtonStyle(
-                            foregroundColor: MaterialStateProperty.all(Colors.black45),
+                            foregroundColor:
+                            MaterialStateProperty.all(Colors.black45),
                             textStyle: MaterialStateProperty.all(
                               TextStyle(fontSize: 18),
                             ),
@@ -128,7 +131,8 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
                         TextButton(
                           onPressed: () {},
                           style: ButtonStyle(
-                            foregroundColor: MaterialStateProperty.all(Colors.black45),
+                            foregroundColor:
+                            MaterialStateProperty.all(Colors.black45),
                             textStyle: MaterialStateProperty.all(
                               TextStyle(fontSize: 18),
                             ),
@@ -178,19 +182,25 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
         width: (double.infinity) - 100,
         child: ElevatedButton(
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => DirectionsMapScreen(
-                  destinationLat: restoLat,
-                  destinationLong: restoLong,
+            if (restoLat != null && restoLong != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DirectionsMapScreen(
+                    destinationLat: restoLat!,
+                    destinationLong: restoLong!,
+                    destinationName: restoName!,
+                  ),
                 ),
-              ),
-            );
+              );
+            } else {
+              // Handle case where coordinates are not available
+            }
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.black, // Change background color
-            padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 24.0), // Change padding
+            padding: EdgeInsets.symmetric(
+                vertical: 15.0, horizontal: 24.0), // Change padding
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20), // Change border radius
             ),
@@ -204,7 +214,7 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
                 style: TextStyle(
                   fontSize: 22, // Change font size
                   fontWeight: FontWeight.bold, // Change font weight
-                  fontFamily: 'Roboto', // Change font family (make sure it's included in your pubspec.yaml)
+                  fontFamily: 'Roboto', // Change font family
                   color: Colors.white, // Change text color
                 ),
               ),
@@ -245,7 +255,10 @@ class FoodPlaceInfoWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance.collection('restaurants').doc(restoID).snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('restaurants')
+          .doc(restoID)
+          .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return Center(child: CircularProgressIndicator());
@@ -254,10 +267,9 @@ class FoodPlaceInfoWidget extends StatelessWidget {
         var resto = snapshot.data!.data() as Map<String, dynamic>;
         double screenWidth = MediaQuery.of(context).size.width;
 
-        String coordinates = resto['resto_geopoint'].toString();
-        List<String> latLng = coordinates.split(", ");
-        double lat = double.parse(latLng[0]);
-        double long = double.parse(latLng[1]);
+        GeoPoint geoPoint = resto['resto_geopoint'];
+        double lat = geoPoint.latitude;
+        double long = geoPoint.longitude;
 
         // Call the callback to update the parent widget's state
         onLocationUpdated(lat, long);
@@ -331,7 +343,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                             ),
                             const SizedBox(height: 5),
                             Text(
-                              resto['resto_address'], // Display the restaurant address
+                              resto['resto_location'],
                               style: const TextStyle(
                                 fontSize: 16,
                                 color: Colors.white,

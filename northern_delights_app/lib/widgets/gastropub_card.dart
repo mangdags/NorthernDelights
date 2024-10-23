@@ -39,8 +39,6 @@ class _GastropubCardsState extends State<GastropubCards> {
                                         MaterialPageRoute(
                                             builder: (context) => GastropubInfo(
                                                 gastropubID: gastropub['id'],
-                                                lat: double.parse(latLng[0]),
-                                                long: double.parse(latLng[1]),
                                             ),
                                         ),
                                     );

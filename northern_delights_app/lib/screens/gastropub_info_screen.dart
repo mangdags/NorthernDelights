@@ -1,29 +1,29 @@
 import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:northern_delights_app/models/gastropub_doc_data.dart';
+import 'package:northern_delights_app/screens/direction_screen.dart';
 
-import 'direction_screen.dart';
+String? gastroName;
 
 class GastropubInfo extends StatefulWidget {
-  const GastropubInfo({
+  GastropubInfo({
     required this.gastropubID,
-    required this.lat,
-    required this.long,
     super.key,
   });
 
   final String gastropubID;
-  final double lat;
-  final double long;
+
+
   @override
   _GastropubInfoState createState() => _GastropubInfoState();
 }
 
 class _GastropubInfoState extends State<GastropubInfo> {
-  ScrollController _scrollController = ScrollController();
+  final ScrollController _scrollController = ScrollController();
   bool _showCircularButton = false;
+
+  double? gastroLat;
+  double? gastroLong;
 
   @override
   void initState() {
@@ -40,8 +40,6 @@ class _GastropubInfoState extends State<GastropubInfo> {
       }
     });
     _incrementViewCount();
-
-    print("Long: ${widget.long}Lat: ${widget.lat}");
   }
 
   // For adding view count
@@ -58,6 +56,16 @@ class _GastropubInfoState extends State<GastropubInfo> {
     }
   }
 
+  // Function to update restaurant coordinates
+  void _updateCoordinates(double lat, double long) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        gastroLat = lat;
+        gastroLong = long;
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -65,28 +73,36 @@ class _GastropubInfoState extends State<GastropubInfo> {
       body: Stack(
         children: [
           StreamBuilder<DocumentSnapshot>(
-            stream: FirebaseFirestore.instance.collection('gastropubs').doc(widget.gastropubID).snapshots(),
+            stream: FirebaseFirestore.instance
+                .collection('gastropubs')
+                .doc(widget.gastropubID)
+                .snapshots(),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
                 return Center(child: CircularProgressIndicator());
               }
 
-              var gastropub = snapshot.data!.data() as Map<String, dynamic>;
-              String gastroOverview = gastropub['gastro_overview'] ?? '';
+              var gastro = snapshot.data!.data() as Map<String, dynamic>;
+              String gastroOverview = gastro['gastro_overview'] ?? '';
+              gastroName = gastro['gastro_name'];
 
               return SingleChildScrollView(
                 controller: _scrollController,
                 child: Column(
                   children: [
-                    FoodPlaceInfoWidget(gastropubID: widget.gastropubID),
+                    FoodPlaceInfoWidget(
+                      gastroID: widget.gastropubID,
+                      onLocationUpdated: _updateCoordinates, // Pass the callback
+                    ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         TextButton(
-                          onPressed: () { },
+                          onPressed: () {},
                           style: ButtonStyle(
-                            foregroundColor: WidgetStateProperty.all(Colors.black),
-                            textStyle: WidgetStateProperty.all(
+                            foregroundColor:
+                            MaterialStateProperty.all(Colors.black),
+                            textStyle: MaterialStateProperty.all(
                               TextStyle(fontSize: 20),
                             ),
                           ),
@@ -95,8 +111,9 @@ class _GastropubInfoState extends State<GastropubInfo> {
                         TextButton(
                           onPressed: () {},
                           style: ButtonStyle(
-                            foregroundColor: WidgetStateProperty.all(Colors.black45),
-                            textStyle: WidgetStateProperty.all(
+                            foregroundColor:
+                            MaterialStateProperty.all(Colors.black45),
+                            textStyle: MaterialStateProperty.all(
                               TextStyle(fontSize: 18),
                             ),
                           ),
@@ -105,8 +122,9 @@ class _GastropubInfoState extends State<GastropubInfo> {
                         TextButton(
                           onPressed: () {},
                           style: ButtonStyle(
-                            foregroundColor: WidgetStateProperty.all(Colors.black45),
-                            textStyle: WidgetStateProperty.all(
+                            foregroundColor:
+                            MaterialStateProperty.all(Colors.black45),
+                            textStyle: MaterialStateProperty.all(
                               TextStyle(fontSize: 18),
                             ),
                           ),
@@ -115,8 +133,9 @@ class _GastropubInfoState extends State<GastropubInfo> {
                         TextButton(
                           onPressed: () {},
                           style: ButtonStyle(
-                            foregroundColor: WidgetStateProperty.all(Colors.black45),
-                            textStyle: WidgetStateProperty.all(
+                            foregroundColor:
+                            MaterialStateProperty.all(Colors.black45),
+                            textStyle: MaterialStateProperty.all(
                               TextStyle(fontSize: 18),
                             ),
                           ),
@@ -143,7 +162,10 @@ class _GastropubInfoState extends State<GastropubInfo> {
                 child: FloatingActionButton(
                   backgroundColor: Colors.black,
                   onPressed: () {},
-                  child: Icon(Icons.navigation, color: Colors.white,),
+                  child: Icon(
+                    Icons.navigation,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             )
@@ -162,14 +184,25 @@ class _GastropubInfoState extends State<GastropubInfo> {
         width: (double.infinity) - 100,
         child: ElevatedButton(
           onPressed: () {
+            if (gastroLat != null && gastroLong != null) {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => DirectionsMapScreen(destinationLong: widget.long, destinationLat: widget.lat, )),
+                MaterialPageRoute(
+                  builder: (context) => DirectionsMapScreen(
+                    destinationLat: gastroLat!,
+                    destinationLong: gastroLong!,
+                    destinationName: gastroName!,
+                  ),
+                ),
               );
-            },
+            } else {
+              // Handle case where coordinates are not available
+            }
+          },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.black, // Change background color
-            padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 24.0), // Change padding
+            padding: EdgeInsets.symmetric(
+                vertical: 15.0, horizontal: 24.0), // Change padding
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20), // Change border radius
             ),
@@ -183,12 +216,12 @@ class _GastropubInfoState extends State<GastropubInfo> {
                 style: TextStyle(
                   fontSize: 22, // Change font size
                   fontWeight: FontWeight.bold, // Change font weight
-                  fontFamily: 'Roboto', // Change font family (make sure it's included in your pubspec.yaml)
+                  fontFamily: 'Roboto', // Change font family
                   color: Colors.white, // Change text color
                 ),
               ),
               SizedBox(width: 8),
-              Icon(Icons.navigation, color: Colors.white,),
+              Icon(Icons.navigation, color: Colors.white),
             ],
           ),
         ),
@@ -212,21 +245,37 @@ class _GastropubInfoState extends State<GastropubInfo> {
 }
 
 class FoodPlaceInfoWidget extends StatelessWidget {
-  FoodPlaceInfoWidget({required this.gastropubID});
+  const FoodPlaceInfoWidget({
+    required this.gastroID,
+    required this.onLocationUpdated, // Accept the callback
+    super.key,
+  });
 
-  final String gastropubID;
+  final String gastroID;
+  final Function(double lat, double long) onLocationUpdated; // Callback definition
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance.collection('gastropubs').doc(gastropubID).snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('gastropubs')
+          .doc(gastroID)
+          .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return Center(child: CircularProgressIndicator());
         }
 
-        var gastropub = snapshot.data!.data() as Map<String, dynamic>;
+        var gastro = snapshot.data!.data() as Map<String, dynamic>;
         double screenWidth = MediaQuery.of(context).size.width;
+
+
+        GeoPoint geoPoint = gastro['gastro_geopoint'];
+        double lat = geoPoint.latitude;
+        double long = geoPoint.longitude;
+
+        // Call the callback to update the parent widget's state
+        onLocationUpdated(lat, long);
 
         return Container(
           margin: EdgeInsets.only(top: 30, left: 20, right: 20),
@@ -252,7 +301,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: Image.network(
-                    gastropub['gastro_image_url'], // Use the image URL from Firestore
+                    gastro['gastro_image_url'], // Use the image URL from Firestore
                     fit: BoxFit.cover,
                     width: 220,
                     height: 300,
@@ -275,99 +324,39 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                 child: ClipRRect(
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                    child: Container(// Padding inside the box
-                    width: 330,
-                    height: 110,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.01),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    width: 330,
-                    height: 110,
-                    margin: const EdgeInsets.only(bottom: 5), // Margin from bottom
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.4),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          gastropub['gastro_name'],
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 3),
-                        Row(
+                    child: Container(
+                      width: 330,
+                      height: 110,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.01),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(15),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            SvgPicture.asset(
-                              'assets/icons/location-pin.svg',
-                              height: 20,
-                              width: 20,
-                              colorFilter: ColorFilter.mode(Colors.white60, BlendMode.srcIn),
-                            ),
-                            const SizedBox(width: 5),
                             Text(
-                              gastropub['gastro_location'],
-                              style: TextStyle(
-                                color: Colors.white70,
+                              gastro['gastro_name'], // Display the restaurant name
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              gastro['gastro_location'], // Display the restaurant address
+                              style: const TextStyle(
                                 fontSize: 16,
+                                color: Colors.white,
                               ),
                             ),
                           ],
                         ),
-                        SizedBox(height: 3),
-                        Row(
-                          children: [
-                            SvgPicture.asset(
-                              'assets/icons/star.svg',
-                              colorFilter: ColorFilter.mode(Colors.white70, BlendMode.srcIn),
-                              height: 20,
-                              width: 20,
-                            ),
-                            SizedBox(width: 5),
-                            Text(
-                              gastropub['gastro_rating'].toString(),
-                              style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 16
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),)),
-              ),
-              // Back button
-              Positioned(
-                top: 20,
-                left: 20,
-                child: GestureDetector(
-                  child: Container(
-                    alignment: Alignment.center,
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: const Color.fromARGB(81, 154, 154, 154),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: SvgPicture.asset(
-                      'assets/icons/back_2.svg',
-                      height: 20,
-                      width: 20,
-                      colorFilter: ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                    ),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
                 ),
               ),
             ],

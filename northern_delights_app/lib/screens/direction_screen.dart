@@ -7,8 +7,9 @@ import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 class DirectionsMapScreen extends StatefulWidget {
   final double destinationLong;
   final double destinationLat;
+  final String destinationName;
 
-  DirectionsMapScreen({required this.destinationLat, required this.destinationLong});
+  DirectionsMapScreen({super.key, required this.destinationLat, required this.destinationLong, required this.destinationName,});
 
   @override
   _DirectionsMapScreenState createState() => _DirectionsMapScreenState();
@@ -16,8 +17,8 @@ class DirectionsMapScreen extends StatefulWidget {
 
 class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
   GoogleMapController? _controller;
-  loc.Location _location = loc.Location();
-  LatLng _currentLocation = LatLng(37.7749, -122.4194); // Default location
+  final loc.Location _location = loc.Location();
+  LatLng? _currentLocation; //= LatLng(17.575969808573436, 120.38716424495031); // Default location
   final _directions = gmaps.GoogleMapsDirections(apiKey: "AIzaSyCBPHgN6Rx3N_1p4HMCLMuwyAOfmvnUggQ");
   List<LatLng> _polylineCoordinates = [];
 
@@ -25,14 +26,7 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
   void initState() {
     super.initState();
     _checkPermissions();
-    _location.onLocationChanged.listen((loc.LocationData locationData) {
-      setState(() {
-        _currentLocation = LatLng(locationData.latitude!, locationData.longitude!);
-        _controller?.animateCamera(CameraUpdate.newLatLng(_currentLocation));
-      });
-    });
-
-    _getDirections(LatLng(widget.destinationLat, widget.destinationLong));
+    _getCurrentLocation(); // Get current location on init
   }
 
   // Request location permissions
@@ -53,8 +47,34 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
     }
   }
 
+  // Get the user's current location
+  void _getCurrentLocation() async {
+    try {
+      final locationData = await _location.getLocation();
+      setState(() {
+        _currentLocation = LatLng(locationData.latitude!, locationData.longitude!);
+        // Call _getDirections after obtaining the current location
+        _getDirections(LatLng(widget.destinationLat, widget.destinationLong));
+        // Animate camera to current location
+        _controller?.animateCamera(CameraUpdate.newLatLng(_currentLocation!));
+      });
+
+      // Listen for location changes
+      _location.onLocationChanged.listen((loc.LocationData locationData) {
+        setState(() {
+          _currentLocation = LatLng(locationData.latitude!, locationData.longitude!);
+          //_controller?.animateCamera(CameraUpdate.newLatLng(_currentLocation!)); // Optional: update camera on location change
+        });
+      });
+    } catch (e) {
+      print('Error getting location: $e');
+    }
+  }
+
   Future<void> _getDirections(LatLng destination) async {
-    final origin = gmaps.Location(lat: _currentLocation.latitude, lng: _currentLocation.longitude);
+    if (_currentLocation == null) return; // Ensure _currentLocation is available
+
+    final origin = gmaps.Location(lat: _currentLocation!.latitude, lng: _currentLocation!.longitude);
     final dest = gmaps.Location(lat: destination.latitude, lng: destination.longitude);
 
     // Request directions
@@ -111,19 +131,17 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Directions to Restaurant")),
+      appBar: AppBar(title: Text("Directions to ${widget.destinationName}")),
       body: GoogleMap(
         initialCameraPosition: CameraPosition(
-          target: _currentLocation,
+          target: _currentLocation ?? LatLng(0, 0), // Use (0, 0) as fallback
           zoom: 14,
         ),
         onMapCreated: (controller) {
           _controller = controller;
-          _location.getLocation().then((locationData) {
-            _controller?.animateCamera(CameraUpdate.newLatLng(
-              LatLng(locationData.latitude!, locationData.longitude!),
-            ));
-          });
+          if (_currentLocation != null) {
+            _controller?.animateCamera(CameraUpdate.newLatLng(_currentLocation!));
+          }
         },
         myLocationEnabled: true,
         compassEnabled: true,
@@ -138,13 +156,29 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
             ),
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Example destination: Restaurant at LatLng(37.7849, -122.4294)
-          _getDirections(LatLng(37.7849, -122.4294));
-        },
-        child: Icon(Icons.directions),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            onPressed: () {
+              // Manually center map on current location
+              if (_currentLocation != null) {
+                _controller?.animateCamera(CameraUpdate.newLatLng(_currentLocation!));
+              }
+            },
+            child: Icon(Icons.my_location),
+          ),
+          SizedBox(height: 10),
+          FloatingActionButton(
+            onPressed: () {
+              // Get directions to the destination
+              _getDirections(LatLng(widget.destinationLat, widget.destinationLong));
+            },
+            child: Icon(Icons.directions),
+          ),
+        ],
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
     );
   }
 }

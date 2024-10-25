@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:northern_delights_app/screens/direction_screen.dart';
 
 String? gastroName;
@@ -161,7 +162,22 @@ class _GastropubInfoState extends State<GastropubInfo> {
                 padding: const EdgeInsets.only(right: 16.0),
                 child: FloatingActionButton(
                   backgroundColor: Colors.black,
-                  onPressed: () {},
+                  onPressed: () {
+                    if (gastroLat != null && gastroLong != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DirectionsMapScreen(
+                            destinationLat: gastroLat!,
+                            destinationLong: gastroLong!,
+                            destinationName: gastroName!,
+                          ),
+                        ),
+                      );
+                    } else {
+                      // Handle case where coordinates are not available
+                    }
+                  },
                   child: Icon(
                     Icons.navigation,
                     color: Colors.white,
@@ -318,17 +334,18 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                   ),
                 ),
               ),
-              // Info box aligned to the bottom center of the image
+
               Positioned(
                 bottom: 15,
                 child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
                     child: Container(
                       width: 330,
-                      height: 110,
+                      height: 120,
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.01),
+                        color: Colors.black.withOpacity(0.4),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Padding(
@@ -339,18 +356,51 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                             Text(
                               gastro['gastro_name'], // Display the restaurant name
                               style: const TextStyle(
-                                fontSize: 22,
+                                fontSize: 23,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                               ),
                             ),
                             const SizedBox(height: 5),
-                            Text(
-                              gastro['gastro_location'], // Display the restaurant address
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: Colors.white,
-                              ),
+                            Row(
+                              children: [
+                                SvgPicture.asset(
+                                  'assets/icons/location-pin.svg',
+                                  height: 20,
+                                  width: 20,
+                                  colorFilter: ColorFilter.mode(
+                                      Colors.white70, BlendMode.srcIn),
+                                ),
+                                SizedBox(width: 5),
+                                Text(
+                                  gastro['gastro_location'],
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 5),
+                            Row(
+                              children: [
+                                const SizedBox(width: 2),
+                                SvgPicture.asset(
+                                  'assets/icons/star.svg',
+                                  height: 15,
+                                  width: 15,
+                                  colorFilter: ColorFilter.mode(
+                                      Colors.white70, BlendMode.srcIn),
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  gastro['gastro_rating'].toString(),
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),

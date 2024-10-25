@@ -1,8 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/directions.dart' as gmaps;
 import 'package:location/location.dart' as loc;
-import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 
 class DirectionsMapScreen extends StatefulWidget {
   final double destinationLong;
@@ -21,12 +21,36 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
   LatLng? _currentLocation; //= LatLng(17.575969808573436, 120.38716424495031); // Default location
   final _directions = gmaps.GoogleMapsDirections(apiKey: "AIzaSyCBPHgN6Rx3N_1p4HMCLMuwyAOfmvnUggQ");
   List<LatLng> _polylineCoordinates = [];
+  StreamSubscription<loc.LocationData>? _locationSubscription;
+  Set<Marker> _markers = {};
+
+  @override
+  void dispose() {
+    _locationSubscription?.cancel(); // Cancel the location listener when disposed
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
     _checkPermissions();
-    _getCurrentLocation(); // Get current location on init
+    _getCurrentLocation(); // Get current location
+    _addDestinationMarker();
+  }
+
+  void _addDestinationMarker() {
+    setState(() {
+      _markers.add(
+        Marker(
+          markerId: MarkerId('destination'),
+          position: LatLng(widget.destinationLat, widget.destinationLong),
+          infoWindow: InfoWindow(
+            title: widget.destinationName,
+          ),
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+        ),
+      );
+    });
   }
 
   // Request location permissions
@@ -51,20 +75,22 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
   void _getCurrentLocation() async {
     try {
       final locationData = await _location.getLocation();
-      setState(() {
-        _currentLocation = LatLng(locationData.latitude!, locationData.longitude!);
-        // Call _getDirections after obtaining the current location
-        _getDirections(LatLng(widget.destinationLat, widget.destinationLong));
-        // Animate camera to current location
-        _controller?.animateCamera(CameraUpdate.newLatLng(_currentLocation!));
-      });
-
-      // Listen for location changes
-      _location.onLocationChanged.listen((loc.LocationData locationData) {
+      if (mounted) {
         setState(() {
           _currentLocation = LatLng(locationData.latitude!, locationData.longitude!);
-          //_controller?.animateCamera(CameraUpdate.newLatLng(_currentLocation!)); // Optional: update camera on location change
+          _getDirections(LatLng(widget.destinationLat, widget.destinationLong));
+          _controller?.animateCamera(CameraUpdate.newLatLng(_currentLocation!));
         });
+      }
+
+      // Listen for location changes and update _currentLocation
+      _locationSubscription = _location.onLocationChanged.listen((loc.LocationData locationData) {
+        if (mounted) {
+          setState(() {
+            _currentLocation = LatLng(locationData.latitude!, locationData.longitude!);
+          });
+          //_controller?.animateCamera(CameraUpdate.newLatLng(_currentLocation!)); // Optional: update camera on location change
+        }
       });
     } catch (e) {
       print('Error getting location: $e');
@@ -86,9 +112,11 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
       // Decode the polyline using the polyline string
       List<LatLng> polylinePoints = _decodePoly(route.overviewPolyline.points);
 
-      setState(() {
-        _polylineCoordinates = polylinePoints;
-      });
+      if (mounted) {
+        setState(() {
+          _polylineCoordinates = polylinePoints;
+        });
+      }
     } else {
       print('Error fetching directions: ${directions.errorMessage}');
     }
@@ -134,7 +162,7 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
       appBar: AppBar(title: Text("Directions to ${widget.destinationName}")),
       body: GoogleMap(
         initialCameraPosition: CameraPosition(
-          target: _currentLocation ?? LatLng(0, 0), // Use (0, 0) as fallback
+          target: _currentLocation ?? LatLng(0, 0), // (0, 0) as fallback
           zoom: 14,
         ),
         onMapCreated: (controller) {
@@ -146,12 +174,13 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
         myLocationEnabled: true,
         compassEnabled: true,
         zoomGesturesEnabled: true,
+        markers: _markers,
         polylines: {
           if (_polylineCoordinates.isNotEmpty)
             Polyline(
               polylineId: PolylineId("directions"),
               points: _polylineCoordinates,
-              color: Colors.blue,
+              color: Colors.red,
               width: 5,
             ),
         },

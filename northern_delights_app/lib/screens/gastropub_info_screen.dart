@@ -3,8 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:northern_delights_app/screens/direction_screen.dart';
+import 'package:northern_delights_app/widgets/menu_widget.dart';
+import 'package:northern_delights_app/widgets/reviews_widget.dart';
 
-String? gastroName;
+enum Tab {Overview, Menu, Review}
 
 class GastropubInfo extends StatefulWidget {
   GastropubInfo({
@@ -14,7 +16,6 @@ class GastropubInfo extends StatefulWidget {
 
   final String gastropubID;
 
-
   @override
   _GastropubInfoState createState() => _GastropubInfoState();
 }
@@ -22,23 +23,19 @@ class GastropubInfo extends StatefulWidget {
 class _GastropubInfoState extends State<GastropubInfo> {
   final ScrollController _scrollController = ScrollController();
   bool _showCircularButton = false;
+  Tab selectedTab =Tab.Overview; // Track the selected tab
 
   double? gastroLat;
   double? gastroLong;
+  String? gastroName;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(() {
-      if (_scrollController.offset > 60) {
-        setState(() {
-          _showCircularButton = true;
-        });
-      } else {
-        setState(() {
-          _showCircularButton = false;
-        });
-      }
+      setState(() {
+        _showCircularButton = _scrollController.offset > 60;
+      });
     });
     _incrementViewCount();
   }
@@ -66,6 +63,7 @@ class _GastropubInfoState extends State<GastropubInfo> {
       });
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -99,53 +97,44 @@ class _GastropubInfoState extends State<GastropubInfo> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         TextButton(
-                          onPressed: () {},
+                          onPressed: () => setState(() => selectedTab = Tab.Overview),
                           style: ButtonStyle(
-                            foregroundColor:
-                            MaterialStateProperty.all(Colors.black),
-                            textStyle: MaterialStateProperty.all(
-                              TextStyle(fontSize: 20),
+                            foregroundColor: WidgetStateProperty.all(
+                                selectedTab == Tab.Overview ? Colors.black : Colors.black45),
+                            textStyle: WidgetStateProperty.all(
+                              TextStyle(fontSize: selectedTab == Tab.Overview ? 20 : 18),
                             ),
                           ),
                           child: Text('Overview'),
                         ),
                         TextButton(
-                          onPressed: () {},
+                          onPressed: () => setState(() => selectedTab = Tab.Menu),
                           style: ButtonStyle(
-                            foregroundColor:
-                            MaterialStateProperty.all(Colors.black45),
-                            textStyle: MaterialStateProperty.all(
-                              TextStyle(fontSize: 18),
+                            foregroundColor: WidgetStateProperty.all(
+                                selectedTab == Tab.Menu ? Colors.black : Colors.black45),
+                            textStyle: WidgetStateProperty.all(
+                              TextStyle(fontSize: selectedTab == Tab.Menu ? 20 : 18),
                             ),
                           ),
                           child: Text('Menu'),
                         ),
                         TextButton(
-                          onPressed: () {},
+                          onPressed: () => setState(() => selectedTab = Tab.Review),
                           style: ButtonStyle(
-                            foregroundColor:
-                            MaterialStateProperty.all(Colors.black45),
-                            textStyle: MaterialStateProperty.all(
-                              TextStyle(fontSize: 18),
+                            foregroundColor: WidgetStateProperty.all(
+                                selectedTab == Tab.Review ? Colors.black : Colors.black45),
+                            textStyle: WidgetStateProperty.all(
+                              TextStyle(fontSize: selectedTab == Tab.Review ? 20 : 18),
                             ),
                           ),
                           child: Text('Review'),
                         ),
-                        TextButton(
-                          onPressed: () {},
-                          style: ButtonStyle(
-                            foregroundColor:
-                            MaterialStateProperty.all(Colors.black45),
-                            textStyle: MaterialStateProperty.all(
-                              TextStyle(fontSize: 18),
-                            ),
-                          ),
-                          child: Text('Details'),
-                        ),
                       ],
                     ),
-                    _buildText(gastroOverview), // Use the regular text widget
-                    SizedBox(height: 200), // Add space to prevent clipping
+                    if (selectedTab == Tab.Overview) _buildText(gastroOverview),
+                    if (selectedTab == Tab.Menu) _menuDetails(),
+                    if (selectedTab == Tab.Review) _reviewDetails(),
+                    SizedBox(height: 200), //Prevent clipping
                   ],
                 ),
               );
@@ -174,8 +163,6 @@ class _GastropubInfoState extends State<GastropubInfo> {
                           ),
                         ),
                       );
-                    } else {
-                      // Handle case where coordinates are not available
                     }
                   },
                   child: Icon(
@@ -192,12 +179,32 @@ class _GastropubInfoState extends State<GastropubInfo> {
     );
   }
 
+  SizedBox _reviewDetails() {
+    return SizedBox(
+      height: 600, // Set a fixed height or use `Expanded` if in a `Column`
+      child: ReviewsDetails(
+          foodPlaceID: widget.gastropubID,
+          foodPlaceCategory: 'gastropubs'
+      ),
+    );
+  }
+
+  SizedBox _menuDetails() {
+    return SizedBox(
+      height: 600,
+      child: MenuDetails(
+          foodPlaceID: widget.gastropubID,
+          foodPlaceCategory: 'gastropubs'
+      ),
+    );
+  }
+
   // Full-width ElevatedButton
   Widget _buildFullWidthButton() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 30.0),
       child: SizedBox(
-        width: (double.infinity) - 100,
+        width: double.infinity,
         child: ElevatedButton(
           onPressed: () {
             if (gastroLat != null && gastroLong != null) {
@@ -211,16 +218,13 @@ class _GastropubInfoState extends State<GastropubInfo> {
                   ),
                 ),
               );
-            } else {
-              // Handle case where coordinates are not available
             }
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.black, // Change background color
-            padding: EdgeInsets.symmetric(
-                vertical: 15.0, horizontal: 24.0), // Change padding
+            backgroundColor: Colors.black,
+            padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 24.0),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20), // Change border radius
+              borderRadius: BorderRadius.circular(20),
             ),
           ),
           child: Row(
@@ -230,10 +234,10 @@ class _GastropubInfoState extends State<GastropubInfo> {
               Text(
                 'Direction',
                 style: TextStyle(
-                  fontSize: 22, // Change font size
-                  fontWeight: FontWeight.bold, // Change font weight
-                  fontFamily: 'Roboto', // Change font family
-                  color: Colors.white, // Change text color
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Roboto',
+                  color: Colors.white,
                 ),
               ),
               SizedBox(width: 8),
@@ -283,7 +287,10 @@ class FoodPlaceInfoWidget extends StatelessWidget {
         }
 
         var gastro = snapshot.data!.data() as Map<String, dynamic>;
-        double screenWidth = MediaQuery.of(context).size.width;
+        double screenWidth = MediaQuery
+            .of(context)
+            .size
+            .width;
 
 
         GeoPoint geoPoint = gastro['gastro_geopoint'];
@@ -317,7 +324,8 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: Image.network(
-                    gastro['gastro_image_url'], // Use the image URL from Firestore
+                    gastro['gastro_image_url'],
+                    // Use the image URL from Firestore
                     fit: BoxFit.cover,
                     width: 220,
                     height: 300,
@@ -354,7 +362,8 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              gastro['gastro_name'], // Display the restaurant name
+                              gastro['gastro_name'],
+                              // Display the restaurant name
                               style: const TextStyle(
                                 fontSize: 23,
                                 fontWeight: FontWeight.bold,

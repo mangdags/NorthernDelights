@@ -5,8 +5,8 @@ class GastropubAllUnsorted {
     return FirebaseFirestore.instance.collection('gastropubs').snapshots().map(
           (snapshot) {
         return snapshot.docs.map((doc) {
-          var data = doc.data() as Map<String, dynamic>;
-          data['id'] = doc.id; // Attach the document ID to the data
+          var data = doc.data();
+          data['id'] = doc.id;
           return data;
         }).toList();
       },
@@ -22,8 +22,8 @@ class GastropubMostViewed {
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {
-        var data = doc.data() as Map<String, dynamic>;
-        data['id'] = doc.id; // Attach the document ID to the data
+        var data = doc.data();
+        data['id'] = doc.id;
         return data;
       }).toList();
     });
@@ -39,7 +39,7 @@ class GastropubLatestAdded {
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {
-        var data = doc.data() as Map<String, dynamic>;
+        var data = doc.data();
         data['id'] = doc.id; // Attach the document ID to the data
         return data;
       }).toList();

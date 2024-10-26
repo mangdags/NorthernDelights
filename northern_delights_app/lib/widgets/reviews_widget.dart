@@ -18,14 +18,14 @@ class ReviewsDetails extends StatefulWidget {
 class _ReviewsDetailsState extends State<ReviewsDetails> {
   DocumentSnapshot? lastDocument;
   bool isLoading = false;
-  bool hasMore = true; // Flag to check if more data is available
+  bool hasMore = true;
   List<QueryDocumentSnapshot> reviews = [];
   final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    fetchReviews(); // Initial fetch
+    fetchReviews();
     _scrollController.addListener(() {
       if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent && hasMore) {
         fetchReviews();
@@ -61,7 +61,7 @@ class _ReviewsDetailsState extends State<ReviewsDetails> {
         reviews.addAll(snapshot.docs);
       });
     } else {
-      hasMore = false; // No more data to fetch
+      hasMore = false;
     }
 
     setState(() => isLoading = false);

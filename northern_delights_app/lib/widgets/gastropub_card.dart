@@ -5,7 +5,7 @@ import 'package:northern_delights_app/models/gastropub_doc_data.dart';
 import 'package:northern_delights_app/screens/gastropub_info_screen.dart';
 
 class GastropubCards extends StatefulWidget {
-    final String selectedCategory; // Accept selected category as a parameter
+    final String selectedCategory;
 
     const GastropubCards({super.key, required this.selectedCategory});
 
@@ -29,9 +29,6 @@ class _GastropubCardsState extends State<GastropubCards> {
                         }
 
                         var gastropubList = snapshot.data!.map((gastropub) {
-
-                            String coordinates = gastropub['gastro_geopoint'].toString();
-                            List<String> latLng = coordinates.split(", ");
                             return GestureDetector(
                                 onTap: () {
                                     Navigator.push(

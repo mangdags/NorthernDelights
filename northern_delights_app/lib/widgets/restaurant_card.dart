@@ -5,7 +5,7 @@ import 'package:northern_delights_app/models/restaurant_doc_data.dart';
 import 'package:northern_delights_app/screens/restaurant_info_screen.dart';
 
 class RestaurantsCard extends StatefulWidget {
-  final String selectedCategory; // Accept selected category as a parameter
+  final String selectedCategory;
 
   const RestaurantsCard({super.key, required this.selectedCategory});
 
@@ -21,7 +21,6 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
     return Column(
       children: [
         StreamBuilder<List<Map<String, dynamic>>>(
-          // Update the stream based on the selected category
           stream: restaurantService.getStream(widget.selectedCategory),
           builder: (context, snapshot) {
             print(widget.selectedCategory);

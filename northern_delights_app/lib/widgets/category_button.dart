@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 class CategoryButton extends StatelessWidget {
-  final Function(String) onCategorySelected; // Callback to notify parent
-  final String selectedCategory; // Currently selected category
+  final Function(String) onCategorySelected;
+  final String selectedCategory;
 
   const CategoryButton({
     super.key,
@@ -10,7 +10,6 @@ class CategoryButton extends StatelessWidget {
     required this.selectedCategory,
   });
 
-  // Function to build each category button
   Widget buildCategoryButton(String label, Color bgColor, Color textColor) {
     return ElevatedButton(
       style: ButtonStyle(
@@ -39,7 +38,7 @@ class CategoryButton extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         buildCategoryButton('Most Viewed', Color(0xFFFBFBFB), Color(0xFFC5C5C5)),
-        buildCategoryButton('Nearby', Color(0xFFFBFBFB), Color(0xFFC5C5C5)),
+        //buildCategoryButton('Nearby', Color(0xFFFBFBFB), Color(0xFFC5C5C5)),
         buildCategoryButton('Latest', Color(0xFFFBFBFB), Color(0xFFC5C5C5)),
       ],
     );

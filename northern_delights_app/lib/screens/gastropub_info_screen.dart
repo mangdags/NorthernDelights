@@ -6,7 +6,7 @@ import 'package:northern_delights_app/screens/direction_screen.dart';
 import 'package:northern_delights_app/widgets/menu_widget.dart';
 import 'package:northern_delights_app/widgets/reviews_widget.dart';
 
-enum Tab {Overview, Menu, Review}
+enum Tab { Overview, Menu, Review }
 
 class GastropubInfo extends StatefulWidget {
   GastropubInfo({
@@ -23,7 +23,7 @@ class GastropubInfo extends StatefulWidget {
 class _GastropubInfoState extends State<GastropubInfo> {
   final ScrollController _scrollController = ScrollController();
   bool _showCircularButton = false;
-  Tab selectedTab =Tab.Overview; // Track the selected tab
+  Tab selectedTab =Tab.Overview; // default tab
 
   double? gastroLat;
   double? gastroLong;
@@ -40,7 +40,6 @@ class _GastropubInfoState extends State<GastropubInfo> {
     _incrementViewCount();
   }
 
-  // For adding view count
   void _incrementViewCount() async {
     try {
       await FirebaseFirestore.instance
@@ -50,11 +49,10 @@ class _GastropubInfoState extends State<GastropubInfo> {
         'gastro_view_count': FieldValue.increment(1),
       });
     } catch (e) {
-      print('Error incrementing view count: $e');
+      print('Error incrementing view count: $e'); //for debugging only
     }
   }
 
-  // Function to update restaurant coordinates
   void _updateCoordinates(double lat, double long) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
@@ -181,7 +179,7 @@ class _GastropubInfoState extends State<GastropubInfo> {
 
   SizedBox _reviewDetails() {
     return SizedBox(
-      height: 600, // Set a fixed height or use `Expanded` if in a `Column`
+      height: 600,
       child: ReviewsDetails(
           foodPlaceID: widget.gastropubID,
           foodPlaceCategory: 'gastropubs'
@@ -199,7 +197,6 @@ class _GastropubInfoState extends State<GastropubInfo> {
     );
   }
 
-  // Full-width ElevatedButton
   Widget _buildFullWidthButton() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 30.0),
@@ -249,7 +246,6 @@ class _GastropubInfoState extends State<GastropubInfo> {
     );
   }
 
-  // Regular Text Widget
   Widget _buildText(String gastroOverview) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
@@ -307,7 +303,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
             children: [
               // Image container
               Container(
-                width: screenWidth - 40, // Leave space for margin
+                width: screenWidth - 40,
                 height: 450,
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -325,7 +321,6 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                   child: Image.network(
                     gastro['gastro_image_url'],
-                    // Use the image URL from Firestore
                     fit: BoxFit.cover,
                     width: 220,
                     height: 300,
@@ -363,7 +358,6 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                           children: [
                             Text(
                               gastro['gastro_name'],
-                              // Display the restaurant name
                               style: const TextStyle(
                                 fontSize: 23,
                                 fontWeight: FontWeight.bold,

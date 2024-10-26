@@ -41,7 +41,6 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
     _incrementViewCount();
   }
 
-  // For adding view count
   void _incrementViewCount() async {
     try {
       await FirebaseFirestore.instance
@@ -51,11 +50,10 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
         'resto_view_count': FieldValue.increment(1),
       });
     } catch (e) {
-      print('Error incrementing view count: $e');
+      print('Error incrementing view count: $e'); // For debugging only
     }
   }
 
-  // Function to update restaurant coordinates
   void _updateCoordinates(double lat, double long) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
@@ -90,7 +88,7 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
                   children: [
                     FoodPlaceInfoWidget(
                       restoID: widget.restaurantID,
-                      onLocationUpdated: _updateCoordinates, // Pass the callback
+                      onLocationUpdated: _updateCoordinates, // Pass callback
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -99,8 +97,8 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
                           onPressed: () {},
                           style: ButtonStyle(
                             foregroundColor:
-                            MaterialStateProperty.all(Colors.black),
-                            textStyle: MaterialStateProperty.all(
+                            WidgetStateProperty.all(Colors.black),
+                            textStyle: WidgetStateProperty.all(
                               TextStyle(fontSize: 20),
                             ),
                           ),
@@ -110,8 +108,8 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
                           onPressed: () {},
                           style: ButtonStyle(
                             foregroundColor:
-                            MaterialStateProperty.all(Colors.black45),
-                            textStyle: MaterialStateProperty.all(
+                            WidgetStateProperty.all(Colors.black45),
+                            textStyle: WidgetStateProperty.all(
                               TextStyle(fontSize: 18),
                             ),
                           ),
@@ -121,8 +119,8 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
                           onPressed: () {},
                           style: ButtonStyle(
                             foregroundColor:
-                            MaterialStateProperty.all(Colors.black45),
-                            textStyle: MaterialStateProperty.all(
+                            WidgetStateProperty.all(Colors.black45),
+                            textStyle: WidgetStateProperty.all(
                               TextStyle(fontSize: 18),
                             ),
                           ),
@@ -132,8 +130,8 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
                           onPressed: () {},
                           style: ButtonStyle(
                             foregroundColor:
-                            MaterialStateProperty.all(Colors.black45),
-                            textStyle: MaterialStateProperty.all(
+                            WidgetStateProperty.all(Colors.black45),
+                            textStyle: WidgetStateProperty.all(
                               TextStyle(fontSize: 18),
                             ),
                           ),
@@ -141,8 +139,8 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
                         ),
                       ],
                     ),
-                    _buildText(restoOverview), // Use the regular text widget
-                    SizedBox(height: 200), // Add space to prevent clipping
+                    _buildText(restoOverview),
+                    SizedBox(height: 200),
                   ],
                 ),
               );
@@ -174,7 +172,6 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
     );
   }
 
-  // Full-width ElevatedButton
   Widget _buildFullWidthButton() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 30.0),
@@ -200,9 +197,9 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.black, // Change background color
             padding: EdgeInsets.symmetric(
-                vertical: 15.0, horizontal: 24.0), // Change padding
+                vertical: 15.0, horizontal: 24.0),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20), // Change border radius
+              borderRadius: BorderRadius.circular(20),
             ),
           ),
           child: Row(
@@ -212,10 +209,10 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
               Text(
                 'Direction',
                 style: TextStyle(
-                  fontSize: 22, // Change font size
-                  fontWeight: FontWeight.bold, // Change font weight
-                  fontFamily: 'Roboto', // Change font family
-                  color: Colors.white, // Change text color
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Roboto',
+                  color: Colors.white,
                 ),
               ),
               SizedBox(width: 8),
@@ -227,7 +224,6 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
     );
   }
 
-  // Regular Text Widget
   Widget _buildText(String restoOverview) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
@@ -281,7 +277,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
             children: [
               // Image container
               Container(
-                width: screenWidth - 40, // Leave space for margin
+                width: screenWidth - 40,
                 height: 450,
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -298,7 +294,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: Image.network(
-                    resto['resto_image_url'], // Use the image URL from Firestore
+                    resto['resto_image_url'],
                     fit: BoxFit.cover,
                     width: 220,
                     height: 300,
@@ -306,7 +302,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                       return Container(
                         alignment: Alignment.center,
                         child: const Icon(
-                          Icons.error, // Fallback if the image can't load
+                          Icons.error,
                           size: 220,
                           color: Colors.red,
                         ),
@@ -315,7 +311,6 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                   ),
                 ),
               ),
-              // Info box aligned to the bottom center of the image
               Positioned(
                 bottom: 15,
                 child: ClipRRect(
@@ -334,7 +329,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              resto['resto_name'], // Display the restaurant name
+                              resto['resto_name'],
                               style: const TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,

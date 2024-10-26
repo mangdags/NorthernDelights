@@ -3,8 +3,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:northern_delights_app/screens/home_screen.dart';
 
-import 'models/gastropub_doc_data.dart';
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,7 +15,7 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
+  // Root
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

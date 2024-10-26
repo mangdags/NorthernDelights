@@ -12,10 +12,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // State to track the currently selected category
+  // Track currently selected sort
   String _selectedCategory = 'Most Viewed'; // Default category
 
-  // Method to update the selected category when a button is pressed
   void _onCategorySelected(String category) {
     setState(() {
       _selectedCategory = category;
@@ -110,7 +109,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
 
                 const SizedBox(height: 20),
-                // Limit the height of the ListView to prevent overflow
                 const Text('Gastropub',
                   style: TextStyle(
                     fontSize: 18,
@@ -121,7 +119,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 20),
 
                 SizedBox(
-                  height: 320, // Set a fixed height for the horizontal list
+                  height: 320,
                   child: GastropubCards(selectedCategory: _selectedCategory,),
                 ),
 
@@ -137,13 +135,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 10,),
 
                 SizedBox(
-                  height: 320, // Set a fixed height for the horizontal list
+                  height: 320,
                   child: RestaurantsCard(selectedCategory: _selectedCategory,),
                 ),
               ],
             ),
           ),
         ),
+        /**
         bottomNavigationBar:
           BottomNavigationBar(
             backgroundColor: Colors.blue,
@@ -170,7 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-
+         **/
       ),
     );
   }
@@ -178,13 +177,13 @@ class _HomeScreenState extends State<HomeScreen> {
  Widget buildCategoryButton(String label, Color bgColor, Color textColor) {
   return ElevatedButton(
     style: ButtonStyle(
-      backgroundColor: WidgetStateProperty.all<Color>(bgColor), // Background color
+      backgroundColor: WidgetStateProperty.all<Color>(bgColor),
       padding: WidgetStateProperty.all<EdgeInsets>(
         EdgeInsets.symmetric(
-          vertical: 5, // Adjust for vertical space
-          horizontal: 20, // Adjust for horizontal space
+          vertical: 5,
+          horizontal: 20,
         ),
-      ), // Padding to make space for the text
+      ),
       elevation: WidgetStateProperty.resolveWith<double?>(
         (Set<WidgetState> states) {
           if (states.contains(WidgetState.pressed)) {
@@ -212,8 +211,8 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 16, // Larger text size for better readability
-          color: textColor, // Use dynamic text color
+          fontSize: 16,
+          color: textColor,
           fontWeight: FontWeight.bold,
         ),
       ),

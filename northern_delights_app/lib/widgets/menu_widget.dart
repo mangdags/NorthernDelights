@@ -18,7 +18,7 @@ class MenuDetails extends StatefulWidget {
 class _MenuDetailsState extends State<MenuDetails> {
   DocumentSnapshot? lastDocument;
   bool isLoading = false;
-  bool hasMore = true; // Flag to check if more data is available
+  bool hasMore = true; // If more data is available
   List<QueryDocumentSnapshot> menu = [];
   final ScrollController _scrollController = ScrollController();
 
@@ -48,7 +48,7 @@ class _MenuDetailsState extends State<MenuDetails> {
         .collection(widget.foodPlaceCategory)
         .doc(widget.foodPlaceID)
         .collection('menu')
-        .limit(10); // Set limit for pagination
+        .limit(50); // Set limit for pagination
 
     if (lastDocument != null) {
       query = query.startAfterDocument(lastDocument!);
@@ -61,7 +61,7 @@ class _MenuDetailsState extends State<MenuDetails> {
         menu.addAll(snapshot.docs);
       });
     } else {
-      hasMore = false; // No more data to fetch
+      hasMore = false;
     }
 
     setState(() => isLoading = false);

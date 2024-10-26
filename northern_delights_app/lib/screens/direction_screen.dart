@@ -18,7 +18,7 @@ class DirectionsMapScreen extends StatefulWidget {
 class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
   GoogleMapController? _controller;
   final loc.Location _location = loc.Location();
-  LatLng? _currentLocation; //= LatLng(17.575969808573436, 120.38716424495031); // Default location
+  LatLng? _currentLocation;
   final _directions = gmaps.GoogleMapsDirections(apiKey: "AIzaSyCBPHgN6Rx3N_1p4HMCLMuwyAOfmvnUggQ");
   List<LatLng> _polylineCoordinates = [];
   StreamSubscription<loc.LocationData>? _locationSubscription;
@@ -26,7 +26,7 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
 
   @override
   void dispose() {
-    _locationSubscription?.cancel(); // Cancel the location listener when disposed
+    _locationSubscription?.cancel(); // Cancel location listener when disposed
     super.dispose();
   }
 
@@ -53,7 +53,6 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
     });
   }
 
-  // Request location permissions
   void _checkPermissions() async {
     bool _serviceEnabled;
     loc.PermissionStatus _permissionGranted;
@@ -71,7 +70,6 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
     }
   }
 
-  // Get the user's current location
   void _getCurrentLocation() async {
     try {
       final locationData = await _location.getLocation();
@@ -83,7 +81,6 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
         });
       }
 
-      // Listen for location changes and update _currentLocation
       _locationSubscription = _location.onLocationChanged.listen((loc.LocationData locationData) {
         if (mounted) {
           setState(() {
@@ -93,12 +90,12 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
         }
       });
     } catch (e) {
-      print('Error getting location: $e');
+      print('Error getting location: $e'); // For debugging only
     }
   }
 
   Future<void> _getDirections(LatLng destination) async {
-    if (_currentLocation == null) return; // Ensure _currentLocation is available
+    if (_currentLocation == null) return; // Ensure _currentLocation is available, return if null
 
     final origin = gmaps.Location(lat: _currentLocation!.latitude, lng: _currentLocation!.longitude);
     final dest = gmaps.Location(lat: destination.latitude, lng: destination.longitude);
@@ -118,7 +115,7 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
         });
       }
     } else {
-      print('Error fetching directions: ${directions.errorMessage}');
+      print('Error fetching directions: ${directions.errorMessage}'); // For debugging only
     }
   }
 
@@ -190,7 +187,6 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
         children: [
           FloatingActionButton(
             onPressed: () {
-              // Manually center map on current location
               if (_currentLocation != null) {
                 _controller?.animateCamera(CameraUpdate.newLatLng(_currentLocation!));
               }
@@ -200,7 +196,6 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
           SizedBox(height: 10),
           FloatingActionButton(
             onPressed: () {
-              // Get directions to the destination
               _getDirections(LatLng(widget.destinationLat, widget.destinationLong));
             },
             child: Icon(Icons.directions),

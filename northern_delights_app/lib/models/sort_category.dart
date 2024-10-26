@@ -9,13 +9,12 @@ class CategorizedScreen extends StatefulWidget {
 }
 
 class _CategorizedScreenState extends State<CategorizedScreen> {
-  // State to track the currently selected category
   String _selectedCategory = 'Most Viewed';
 
-  // Method to update the selected category
+  // Update selected category
   void _onCategorySelected(String category) {
     setState(() {
-      _selectedCategory = category; // Update the selected category
+      _selectedCategory = category;
     });
   }
 

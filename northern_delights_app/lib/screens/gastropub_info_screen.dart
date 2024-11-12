@@ -8,8 +8,11 @@ import 'package:northern_delights_app/widgets/reviews_widget.dart';
 
 enum Tab { Overview, Menu, Review }
 
+double? screenHeight;
+double? screenWidth;
+
 class GastropubInfo extends StatefulWidget {
-  GastropubInfo({
+  const GastropubInfo({
     required this.gastropubID,
     super.key,
   });
@@ -23,6 +26,7 @@ class GastropubInfo extends StatefulWidget {
 class _GastropubInfoState extends State<GastropubInfo> {
   final ScrollController _scrollController = ScrollController();
   bool _showCircularButton = false;
+  bool _showFullHeight = false;
   Tab selectedTab =Tab.Overview; // default tab
 
   double? gastroLat;
@@ -131,8 +135,9 @@ class _GastropubInfoState extends State<GastropubInfo> {
                     ),
                     if (selectedTab == Tab.Overview) _buildText(gastroOverview),
                     if (selectedTab == Tab.Menu) _menuDetails(),
-                    if (selectedTab == Tab.Review) _reviewDetails(),
-                    SizedBox(height: 200), //Prevent clipping
+                    if (selectedTab == Tab.Review)
+                      _reviewDetails(),
+                    const SizedBox(height: 100), //Prevent clipping
                   ],
                 ),
               );
@@ -179,13 +184,13 @@ class _GastropubInfoState extends State<GastropubInfo> {
 
   SizedBox _reviewDetails() {
     return SizedBox(
-      height: 600,
       child: ReviewsDetails(
           foodPlaceID: widget.gastropubID,
           foodPlaceCategory: 'gastropubs'
       ),
     );
   }
+
 
   SizedBox _menuDetails() {
     return SizedBox(
@@ -251,6 +256,7 @@ class _GastropubInfoState extends State<GastropubInfo> {
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
       child: Text(
         gastroOverview,
+        overflow: TextOverflow.fade,
         style: TextStyle(
           color: Colors.black87,
           fontSize: 16,
@@ -283,10 +289,14 @@ class FoodPlaceInfoWidget extends StatelessWidget {
         }
 
         var gastro = snapshot.data!.data() as Map<String, dynamic>;
-        double screenWidth = MediaQuery
+        screenWidth = MediaQuery
             .of(context)
             .size
             .width;
+        screenHeight = MediaQuery
+            .of(context)
+            .size
+            .height;
 
 
         GeoPoint geoPoint = gastro['gastro_geopoint'];
@@ -303,7 +313,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
             children: [
               // Image container
               Container(
-                width: screenWidth - 40,
+                width: screenWidth! - 40,
                 height: 450,
                 decoration: BoxDecoration(
                   color: Colors.white,

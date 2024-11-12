@@ -2,12 +2,18 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:northern_delights_app/screens/home_screen.dart';
+import 'package:northern_delights_app/screens/signin_screen.dart';
+import 'package:northern_delights_app/screens/signup_screen.dart';
 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  FirebaseFirestore.instance.settings = const Settings(persistenceEnabled: true);
+
+  FirebaseFirestore.instance.settings = const Settings(
+    persistenceEnabled: true,
+    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+  );
 
   runApp(const MyApp());
 }
@@ -28,9 +34,10 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       home: HomeScreen(),
-      initialRoute: 'home_screen',
+
+      initialRoute: 'signin_screen',
        routes: {
-         'home_screen': (context) => HomeScreen(),
+         'signin_screen': (context) => SigninScreen(),
        }
     );
   }

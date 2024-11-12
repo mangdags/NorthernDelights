@@ -1,9 +1,15 @@
 import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:northern_delights_app/screens/direction_screen.dart';
+import 'package:northern_delights_app/widgets/menu_widget.dart';
+import 'package:northern_delights_app/widgets/reviews_widget.dart';
 
-String? restoName;
+enum Tab { Overview, Menu, Review }
+
+double? screenHeight;
+double? screenWidth;
 
 class RestaurantInfo extends StatefulWidget {
   const RestaurantInfo({
@@ -20,23 +26,20 @@ class RestaurantInfo extends StatefulWidget {
 class _RestaurantInfoState extends State<RestaurantInfo> {
   final ScrollController _scrollController = ScrollController();
   bool _showCircularButton = false;
+  bool _showFullHeight = false;
+  Tab selectedTab =Tab.Overview; // default tab
 
   double? restoLat;
   double? restoLong;
+  String? restoName;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(() {
-      if (_scrollController.offset > 60) {
-        setState(() {
-          _showCircularButton = true;
-        });
-      } else {
-        setState(() {
-          _showCircularButton = false;
-        });
-      }
+      setState(() {
+        _showCircularButton = _scrollController.offset > 60;
+      });
     });
     _incrementViewCount();
   }
@@ -47,10 +50,10 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
           .collection('restaurants')
           .doc(widget.restaurantID)
           .update({
-        'resto_view_count': FieldValue.increment(1),
+        'view_count': FieldValue.increment(1),
       });
     } catch (e) {
-      print('Error incrementing view count: $e'); // For debugging only
+      print('Error incrementing view count: $e'); //for debugging only
     }
   }
 
@@ -62,6 +65,7 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
       });
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +84,8 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
               }
 
               var resto = snapshot.data!.data() as Map<String, dynamic>;
-              String restoOverview = resto['resto_overview'] ?? '';
+              String restoOverview = resto['overview'] ?? '';
+              restoName = resto['name'];
 
               return SingleChildScrollView(
                 controller: _scrollController,
@@ -88,59 +93,51 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
                   children: [
                     FoodPlaceInfoWidget(
                       restoID: widget.restaurantID,
-                      onLocationUpdated: _updateCoordinates, // Pass callback
+                      onLocationUpdated: _updateCoordinates, // Pass the callback
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         TextButton(
-                          onPressed: () {},
+                          onPressed: () => setState(() => selectedTab = Tab.Overview),
                           style: ButtonStyle(
-                            foregroundColor:
-                            WidgetStateProperty.all(Colors.black),
+                            foregroundColor: WidgetStateProperty.all(
+                                selectedTab == Tab.Overview ? Colors.black : Colors.black45),
                             textStyle: WidgetStateProperty.all(
-                              TextStyle(fontSize: 20),
+                              TextStyle(fontSize: selectedTab == Tab.Overview ? 20 : 18),
                             ),
                           ),
                           child: Text('Overview'),
                         ),
                         TextButton(
-                          onPressed: () {},
+                          onPressed: () => setState(() => selectedTab = Tab.Menu),
                           style: ButtonStyle(
-                            foregroundColor:
-                            WidgetStateProperty.all(Colors.black45),
+                            foregroundColor: WidgetStateProperty.all(
+                                selectedTab == Tab.Menu ? Colors.black : Colors.black45),
                             textStyle: WidgetStateProperty.all(
-                              TextStyle(fontSize: 18),
+                              TextStyle(fontSize: selectedTab == Tab.Menu ? 20 : 18),
                             ),
                           ),
                           child: Text('Menu'),
                         ),
                         TextButton(
-                          onPressed: () {},
+                          onPressed: () => setState(() => selectedTab = Tab.Review),
                           style: ButtonStyle(
-                            foregroundColor:
-                            WidgetStateProperty.all(Colors.black45),
+                            foregroundColor: WidgetStateProperty.all(
+                                selectedTab == Tab.Review ? Colors.black : Colors.black45),
                             textStyle: WidgetStateProperty.all(
-                              TextStyle(fontSize: 18),
+                              TextStyle(fontSize: selectedTab == Tab.Review ? 20 : 18),
                             ),
                           ),
                           child: Text('Review'),
                         ),
-                        TextButton(
-                          onPressed: () {},
-                          style: ButtonStyle(
-                            foregroundColor:
-                            WidgetStateProperty.all(Colors.black45),
-                            textStyle: WidgetStateProperty.all(
-                              TextStyle(fontSize: 18),
-                            ),
-                          ),
-                          child: Text('Details'),
-                        ),
                       ],
                     ),
-                    _buildText(restoOverview),
-                    SizedBox(height: 200),
+                    if (selectedTab == Tab.Overview) _buildText(restoOverview),
+                    if (selectedTab == Tab.Menu) _menuDetails(),
+                    if (selectedTab == Tab.Review)
+                      _reviewDetails(),
+                    const SizedBox(height: 100), //Prevent clipping
                   ],
                 ),
               );
@@ -157,7 +154,20 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
                 padding: const EdgeInsets.only(right: 16.0),
                 child: FloatingActionButton(
                   backgroundColor: Colors.black,
-                  onPressed: () {},
+                  onPressed: () {
+                    if (restoLat != null && restoLong != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DirectionsMapScreen(
+                            destinationLat: restoLat!,
+                            destinationLong: restoLong!,
+                            destinationName: restoName!,
+                          ),
+                        ),
+                      );
+                    }
+                  },
                   child: Icon(
                     Icons.navigation,
                     color: Colors.white,
@@ -172,11 +182,31 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
     );
   }
 
+  SizedBox _reviewDetails() {
+    return SizedBox(
+      child: ReviewsDetails(
+          foodPlaceID: widget.restaurantID,
+          foodPlaceCategory: 'restaurants'
+      ),
+    );
+  }
+
+
+  SizedBox _menuDetails() {
+    return SizedBox(
+      height: 600,
+      child: MenuDetails(
+          foodPlaceID: widget.restaurantID,
+          foodPlaceCategory: 'restaurants'
+      ),
+    );
+  }
+
   Widget _buildFullWidthButton() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 30.0),
       child: SizedBox(
-        width: (double.infinity) - 100,
+        width: double.infinity,
         child: ElevatedButton(
           onPressed: () {
             if (restoLat != null && restoLong != null) {
@@ -190,14 +220,11 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
                   ),
                 ),
               );
-            } else {
-              // Handle case where coordinates are not available
             }
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.black, // Change background color
-            padding: EdgeInsets.symmetric(
-                vertical: 15.0, horizontal: 24.0),
+            backgroundColor: Colors.black,
+            padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 24.0),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
@@ -229,6 +256,7 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
       child: Text(
         restoOverview,
+        overflow: TextOverflow.fade,
         style: TextStyle(
           color: Colors.black87,
           fontSize: 16,
@@ -261,9 +289,17 @@ class FoodPlaceInfoWidget extends StatelessWidget {
         }
 
         var resto = snapshot.data!.data() as Map<String, dynamic>;
-        double screenWidth = MediaQuery.of(context).size.width;
+        screenWidth = MediaQuery
+            .of(context)
+            .size
+            .width;
+        screenHeight = MediaQuery
+            .of(context)
+            .size
+            .height;
 
-        GeoPoint geoPoint = resto['resto_geopoint'];
+
+        GeoPoint geoPoint = resto['geopoint'];
         double lat = geoPoint.latitude;
         double long = geoPoint.longitude;
 
@@ -277,7 +313,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
             children: [
               // Image container
               Container(
-                width: screenWidth - 40,
+                width: screenWidth! - 40,
                 height: 450,
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -294,7 +330,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: Image.network(
-                    resto['resto_image_url'],
+                    resto['image_url'],
                     fit: BoxFit.cover,
                     width: 220,
                     height: 300,
@@ -302,7 +338,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                       return Container(
                         alignment: Alignment.center,
                         child: const Icon(
-                          Icons.error,
+                          Icons.error, // Fallback if the image can't load
                           size: 220,
                           color: Colors.red,
                         ),
@@ -311,16 +347,18 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                   ),
                 ),
               ),
+
               Positioned(
                 bottom: 15,
                 child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
                     child: Container(
                       width: 330,
-                      height: 110,
+                      height: 120,
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.01),
+                        color: Colors.black.withOpacity(0.4),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Padding(
@@ -329,20 +367,53 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              resto['resto_name'],
+                              resto['name'],
                               style: const TextStyle(
-                                fontSize: 22,
+                                fontSize: 23,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                               ),
                             ),
                             const SizedBox(height: 5),
-                            Text(
-                              resto['resto_location'],
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: Colors.white,
-                              ),
+                            Row(
+                              children: [
+                                SvgPicture.asset(
+                                  'assets/icons/location-pin.svg',
+                                  height: 20,
+                                  width: 20,
+                                  colorFilter: ColorFilter.mode(
+                                      Colors.white70, BlendMode.srcIn),
+                                ),
+                                SizedBox(width: 5),
+                                Text(
+                                  resto['location'],
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 5),
+                            Row(
+                              children: [
+                                const SizedBox(width: 2),
+                                SvgPicture.asset(
+                                  'assets/icons/star.svg',
+                                  height: 15,
+                                  width: 15,
+                                  colorFilter: ColorFilter.mode(
+                                      Colors.white70, BlendMode.srcIn),
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  resto['rating'].toString(),
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),

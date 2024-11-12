@@ -9,7 +9,7 @@ class DirectionsMapScreen extends StatefulWidget {
   final double destinationLat;
   final String destinationName;
 
-  DirectionsMapScreen({super.key, required this.destinationLat, required this.destinationLong, required this.destinationName,});
+  const DirectionsMapScreen({super.key, required this.destinationLat, required this.destinationLong, required this.destinationName,});
 
   @override
   _DirectionsMapScreenState createState() => _DirectionsMapScreenState();
@@ -22,7 +22,7 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
   final _directions = gmaps.GoogleMapsDirections(apiKey: "AIzaSyCBPHgN6Rx3N_1p4HMCLMuwyAOfmvnUggQ");
   List<LatLng> _polylineCoordinates = [];
   StreamSubscription<loc.LocationData>? _locationSubscription;
-  Set<Marker> _markers = {};
+  final Set<Marker> _markers = {};
 
   @override
   void dispose() {
@@ -54,19 +54,19 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
   }
 
   void _checkPermissions() async {
-    bool _serviceEnabled;
-    loc.PermissionStatus _permissionGranted;
+    bool serviceEnabled;
+    loc.PermissionStatus permissionGranted;
 
-    _serviceEnabled = await _location.serviceEnabled();
-    if (!_serviceEnabled) {
-      _serviceEnabled = await _location.requestService();
-      if (!_serviceEnabled) return;
+    serviceEnabled = await _location.serviceEnabled();
+    if (!serviceEnabled) {
+      serviceEnabled = await _location.requestService();
+      if (!serviceEnabled) return;
     }
 
-    _permissionGranted = await _location.hasPermission();
-    if (_permissionGranted == loc.PermissionStatus.denied) {
-      _permissionGranted = await _location.requestPermission();
-      if (_permissionGranted != loc.PermissionStatus.granted) return;
+    permissionGranted = await _location.hasPermission();
+    if (permissionGranted == loc.PermissionStatus.denied) {
+      permissionGranted = await _location.requestPermission();
+      if (permissionGranted != loc.PermissionStatus.granted) return;
     }
   }
 

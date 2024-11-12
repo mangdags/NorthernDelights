@@ -60,7 +60,7 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(20),
                             child: Image.network(
-                              resto['resto_image_url'],
+                              resto['image_url'],
                               fit: BoxFit.cover,
                               width: 220,
                               height: 300,
@@ -98,7 +98,7 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      resto['resto_name'],
+                                      resto['name'],
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
@@ -118,7 +118,7 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
                                         ),
                                         SizedBox(width: 5),
                                         Text(
-                                          resto['resto_location'],
+                                          resto['location'],
                                           style: TextStyle(
                                             color: Colors.white70,
                                             fontSize: 12,
@@ -138,7 +138,7 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
                                         ),
                                         SizedBox(width: 8),
                                         Text(
-                                          resto['resto_rating'].toString(),
+                                          resto['rating'].toString(),
                                           style: TextStyle(
                                             color: Colors.white70,
                                             fontSize: 12,

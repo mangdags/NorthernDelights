@@ -4,6 +4,8 @@ import 'package:northern_delights_app/widgets/category_button.dart';
 import 'package:northern_delights_app/widgets/gastropub_card.dart';
 
 class CategorizedScreen extends StatefulWidget {
+  const CategorizedScreen({super.key});
+
   @override
   _CategorizedScreenState createState() => _CategorizedScreenState();
 }

@@ -1,0 +1,248 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:northern_delights_app/screens/home_screen.dart';
+import 'package:northern_delights_app/screens/signin_screen.dart';
+
+class SignupScreen extends StatefulWidget {
+  const SignupScreen({super.key});
+
+  @override
+  State<SignupScreen> createState() => _SignupScreenState();
+}
+
+class _SignupScreenState extends State<SignupScreen> {
+  final _auth = FirebaseAuth.instance;
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+
+  String? firstName;
+  String? lastName;
+  String? email;
+  String? password;
+  String? confirmPassword;
+  String? _passwordMismatchWarning;
+
+
+  @override
+  Widget build(BuildContext context) {
+    return
+      Scaffold(
+        body: SafeArea(
+        child: SingleChildScrollView(
+          child: Center(
+            child: Column(
+              children: [
+                const SizedBox(height: 50,),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Northern',
+                    style: TextStyle(
+                        color: Colors.blueAccent,
+                        fontSize: 35,
+                        fontWeight: FontWeight.w400,
+                        fontFamily: 'Roboto'
+                    ),
+                  ),
+                  Text(
+                    ' Delights',
+                    style: TextStyle(
+                        color: Colors.blueAccent,
+                        fontSize: 35,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Montez'
+                    ),
+                  ),
+                ],
+              ),
+                const SizedBox(height: 50),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  child: TextField(
+                    controller: _firstNameController,
+                    textAlign: TextAlign.center,
+                    onChanged: (value){
+                      firstName = value;
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'First Name',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  child: TextField(
+                    controller: _lastNameController,
+                    textAlign: TextAlign.center,
+                    onChanged: (value){
+                      lastName = value;
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'Last Name',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  child: TextField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    textAlign: TextAlign.center,
+                    onChanged: (value){
+                      email = value;
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'Email Address',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  child: TextField(
+                    controller: _passwordController,
+                    textAlign: TextAlign.center,
+                    onChanged: (value){
+                      password = value;
+                    },
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      hintText: 'Password',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                      ),
+                    ),
+                  ),
+                ),const SizedBox(height: 20),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  child: TextField(
+                    controller: _confirmPasswordController,
+                    textAlign: TextAlign.center,
+                    onChanged: (_){
+                      _validatePasswords();
+                    },
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      hintText: 'Repeat Password',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                      ),
+                    ),
+                  ),
+                ),
+                if (_passwordMismatchWarning != null)
+                  Text(
+                    _passwordMismatchWarning!,
+                    style: TextStyle(color: Colors.red),
+                  ),
+                const SizedBox(height: 30),
+                ElevatedButton(
+                  onPressed: () async {
+                    try{
+                      if (_passwordMismatchWarning == null) {
+                        signUpWithEmailPassword(
+                            isAdmin: false,
+                            firstName: _firstNameController.text.trim(),
+                            lastName: _lastNameController.text.trim(),
+                            email: _emailController.text.trim(),
+                            password: _passwordController.text.trim());
+                      }
+                    } catch (e){
+                      print(e);
+                    }
+                    },
+                  style: ElevatedButton.styleFrom(
+                    fixedSize: Size(300, 50),
+                  ),
+                  child: Text('Signup'),
+                ),
+                const SizedBox(height: 20,),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Already have an account?'),
+                    TextButton(
+                        onPressed: (){
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => SigninScreen(),
+                            ),
+                          );
+                        },
+                        child: Text('Sign in'),),
+                  ],
+                ),
+          
+              ],
+            ),
+          ),
+        )
+            ),
+      );
+  }
+
+  void _validatePasswords() {
+    if (_passwordController.text != _confirmPasswordController.text) {
+      setState(() {
+        _passwordMismatchWarning = "Passwords do not match";
+      });
+    } else {
+      setState(() {
+        _passwordMismatchWarning = null;
+      });
+    }
+  }
+
+  Future<void> signUpWithEmailPassword({
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String password,
+    required bool isAdmin,
+  }) async {
+    try {
+      // Create the user with Firebase Auth
+      UserCredential userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: password);
+
+      // Get the user ID
+      User? user = userCredential.user;
+
+      if (user != null) {
+        // Store additional details in Firestore
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'isAdmin': false,
+          'firstName': firstName,
+          'lastName': lastName,
+          'email': email,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        // Optionally update display name
+        Navigator.push(context, MaterialPageRoute(builder: (context)=> SigninScreen()));
+        await user.updateDisplayName('$firstName $lastName');
+      }
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
+}

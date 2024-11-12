@@ -18,7 +18,7 @@ class RestaurantMostViewed {
   Stream<List<Map<String, dynamic>>> getRestaurantMostViewed() {
     return FirebaseFirestore.instance
         .collection('restaurants')
-        .orderBy('resto_view_count', descending: true)
+        .orderBy('view_count', descending: true)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {
@@ -35,7 +35,7 @@ class RestaurantLatestAdded {
   Stream<List<Map<String, dynamic>>> getRestaurantLatestAdded() {
     return FirebaseFirestore.instance
         .collection('restaurants')
-        .orderBy('resto_date_added', descending: true)
+        .orderBy('date_added', descending: true)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {

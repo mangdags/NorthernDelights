@@ -10,6 +10,7 @@ class SellerManagementScreen extends StatefulWidget {
 
 class _SellerManagementScreenState extends State<SellerManagementScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  late String storeType;
 
   Stream<QuerySnapshot> _getSellersStream() {
     return _firestore.collection('users').where('isSeller', isEqualTo: true).snapshots();
@@ -21,6 +22,18 @@ class _SellerManagementScreenState extends State<SellerManagementScreen> {
       'first_name': firstName,
       'last_name': lastName,
       'shop_name': shopName,
+      'email_address': emailAddress,
+    });
+
+    _editStore(sellerId, firstName, lastName, shopName, emailAddress, storeType);
+  }
+
+  // Update seller information under gastro/resto
+  Future<void> _editStore(String sellerId, String firstName, String lastName, String shopName, String emailAddress, String storeType) async {
+    await _firestore.collection(storeType).doc(sellerId).update({
+      'first_name': firstName,
+      'last_name': lastName,
+      'name': shopName,
       'email_address': emailAddress,
     });
   }
@@ -111,6 +124,7 @@ class _SellerManagementScreenState extends State<SellerManagementScreen> {
               final firstName = seller['first_name'] ?? '';
               final lastName = seller['last_name'] ?? '';
               final emailAddress = seller['email_address'] ?? '';
+              storeType = seller['store_type'];
 
               return ListTile(
                 leading: Icon(Icons.store),

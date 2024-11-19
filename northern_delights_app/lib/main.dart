@@ -3,7 +3,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:northern_delights_app/screens/home_screen.dart';
 import 'package:northern_delights_app/screens/signin_screen.dart';
-import 'package:northern_delights_app/screens/signup_screen.dart';
 
 
 void main() async {

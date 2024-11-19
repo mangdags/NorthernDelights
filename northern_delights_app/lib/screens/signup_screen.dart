@@ -5,7 +5,9 @@ import 'package:northern_delights_app/screens/home_screen.dart';
 import 'package:northern_delights_app/screens/signin_screen.dart';
 
 class SignupScreen extends StatefulWidget {
-  const SignupScreen({super.key});
+  const SignupScreen({super.key, required this.isSeller});
+
+  final bool isSeller;
 
   @override
   State<SignupScreen> createState() => _SignupScreenState();
@@ -18,6 +20,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _shopNameController = TextEditingController();
 
   String? firstName;
   String? lastName;
@@ -25,7 +28,8 @@ class _SignupScreenState extends State<SignupScreen> {
   String? password;
   String? confirmPassword;
   String? _passwordMismatchWarning;
-
+  String _selectedType = 'Gastropub';
+  String? shop_name;
 
   @override
   Widget build(BuildContext context) {
@@ -112,6 +116,25 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
                 ),
+                if (widget.isSeller)
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.8,
+                    child: TextField(
+                      controller: _shopNameController,
+                      textAlign: TextAlign.center,
+                      onChanged: (value){
+                        shop_name = value;
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Shop Name',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(10)),
+                        ),
+                      ),
+                    ),
+                  ),
+
                 const SizedBox(height: 20),
                 SizedBox(
                   width: MediaQuery.of(context).size.width * 0.8,
@@ -129,7 +152,8 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                     ),
                   ),
-                ),const SizedBox(height: 20),
+                ),
+                const SizedBox(height: 20),
                 SizedBox(
                   width: MediaQuery.of(context).size.width * 0.8,
                   child: TextField(
@@ -152,6 +176,35 @@ class _SignupScreenState extends State<SignupScreen> {
                     _passwordMismatchWarning!,
                     style: TextStyle(color: Colors.red),
                   ),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      RadioListTile<String>(
+                        title: Text('Gastropub', style: TextStyle(fontSize: 16),),
+                        value: 'gastropubs',
+                        groupValue: _selectedType,
+                        onChanged: (String? value) {
+                          setState(() {
+                            _selectedType = value!;
+                          });
+                        },
+                      ),
+                      RadioListTile<String>(
+                        title: Text('Restaurant', style: TextStyle(fontSize: 16),),
+                        value: 'restaurants',
+                        groupValue: _selectedType,
+                        onChanged: (String? value) {
+                          setState(() {
+                            _selectedType = value!;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
                 const SizedBox(height: 30),
                 ElevatedButton(
                   onPressed: () async {
@@ -162,7 +215,9 @@ class _SignupScreenState extends State<SignupScreen> {
                             firstName: _firstNameController.text.trim(),
                             lastName: _lastNameController.text.trim(),
                             email: _emailController.text.trim(),
-                            password: _passwordController.text.trim());
+                            password: _passwordController.text.trim(),
+                            isSeller: widget.isSeller,
+                            shopName: _shopNameController.text.trim());
                       }
                     } catch (e){
                       print(e);
@@ -217,6 +272,8 @@ class _SignupScreenState extends State<SignupScreen> {
     required String email,
     required String password,
     required bool isAdmin,
+    required bool isSeller,
+    required String shopName,
   }) async {
     try {
       // Create the user with Firebase Auth
@@ -230,17 +287,63 @@ class _SignupScreenState extends State<SignupScreen> {
         // Store additional details in Firestore
         await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
           'isAdmin': false,
-          'firstName': firstName,
-          'lastName': lastName,
-          'email': email,
+          'isSeller': isSeller,
+          'first_name': firstName,
+          'last_name': lastName,
+          'email_address': email,
+          'shop_name' : shopName,
           'createdAt': FieldValue.serverTimestamp(),
         });
 
-        // Optionally update display name
+        _createStoreAccount(
+            firstName: firstName,
+            lastName: lastName,
+            email: email,
+            password: password,
+            isAdmin: isAdmin,
+            isSeller: isSeller,
+            uid: user.uid,
+            storeType: _selectedType,
+            shopName: shopName);
+
         Navigator.push(context, MaterialPageRoute(builder: (context)=> SigninScreen()));
         await user.updateDisplayName('$firstName $lastName');
       }
     } catch (e) {
+      print("Error: $e");
+    }
+  }
+
+  Future<void> _createStoreAccount({
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String password,
+    required bool isAdmin,
+    required bool isSeller,
+    required String uid,
+    required String storeType,
+    required String shopName,
+  }) async {
+    try {
+
+      await FirebaseFirestore.instance.collection(storeType).doc(uid).set({
+        'name': shopName,
+        'email_address': email,
+        'geopoint': GeoPoint(0.0, 0.0),
+        'open_time': Timestamp.now(),
+        'close_time': Timestamp.now(),
+        'rating': 0.0,
+        'view_count': 0,
+        'date_added': FieldValue.serverTimestamp(),
+        'overview': '',
+        'location': '',
+        'image_url': '',
+      });
+
+      Navigator.push(context, MaterialPageRoute(builder: (context)=> SigninScreen()));
+
+        } catch (e) {
       print("Error: $e");
     }
   }

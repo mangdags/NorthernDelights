@@ -104,9 +104,22 @@ class _SigninScreenState extends State<SigninScreen> {
                   TextButton(
                     onPressed: (){
                       Navigator.push(context,
-                      MaterialPageRoute(builder: (context)=> SignupScreen()));
+                      MaterialPageRoute(builder: (context)=> SignupScreen(isSeller: false)));
                     },
                     child: Text('Signup'),),
+                ],
+              ),
+              const SizedBox(height: 5),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Are you a seller?'),
+                  TextButton(
+                    onPressed: (){
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context)=> SignupScreen(isSeller: true)));
+                    },
+                    child: Text('Signup as Seller'),),
                 ],
               ),
             ],

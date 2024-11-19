@@ -6,6 +6,7 @@ import 'package:northern_delights_app/screens/seller_management_screen.dart';
 import 'package:northern_delights_app/screens/signin_screen.dart';
 import 'package:northern_delights_app/screens/signup_screen.dart';
 import 'package:northern_delights_app/screens/user_management_screen.dart';
+import 'package:northern_delights_app/screens/user_profile_screen.dart';
 import 'package:northern_delights_app/widgets/gastropub_card.dart';
 import 'package:northern_delights_app/widgets/restaurant_card.dart';
 import 'package:northern_delights_app/widgets/category_button.dart';
@@ -26,10 +27,13 @@ class _HomeScreenState extends State<HomeScreen> {
   String selectedPage = '';
   String shopName = '';
   String email = '';
-  bool isAdmin = true;
+  bool isAdmin = false;
   bool isSeller = false;
-  Map<String, dynamic>? gastropubData;
-  Map<String, dynamic>? restaurantData;
+  Map<String, dynamic>? userData;
+  String userID = '';
+  TextEditingController _searchController = TextEditingController();
+  List<DocumentSnapshot> _searchResults = [];
+  late String _searchKeyword;
 
   @override
   void initState() {
@@ -45,6 +49,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Filter the results based on the keyword
+    final filteredResults = _searchResults.where((doc) {
+      final name = doc['name']?.toLowerCase() ?? '';
+      final location = doc['location']?.toLowerCase() ?? '';
+      final keyword = _searchKeyword.toLowerCase();  // Hold search keyword
+
+      return name.contains(keyword) || location.contains(keyword);
+    }).toList();
+
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
@@ -97,7 +110,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                       child: TextField(
+                        controller: _searchController,
+                        onChanged: _searchMenu,
                         decoration: InputDecoration(
+                          hintText: 'Search by name or location',
                           prefixIcon: Opacity(
                             opacity: 0.5,
                             child: Padding(
@@ -115,7 +131,38 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ),
-                  ],
+          _searchResults.isEmpty
+              ? Text('')
+              : Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (_searchResults.any((doc) => doc.reference.parent.id == 'gastropubs')) ...[
+                Text(
+                  'Gastropubs',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+                for (var doc in _searchResults.where((doc) => doc.reference.parent.id == 'gastropubs'))
+                  //GastropubCards(data: doc.data() as Map<String, dynamic>, selectedCategory: ''),
+                const SizedBox(height: 20),
+              ],
+    if (_searchResults.any((doc) => doc.reference.parent.id == 'restaurants')) ...[
+      Text(
+        'Restaurants',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          ),
+                    // Show the filtered results
+          if (filteredResults.isNotEmpty) ...[
+          for (var doc in filteredResults.where((doc) => doc.reference.parent.id == 'restaurants'))
+          RestaurantsCard(data: doc.data() as Map<String, dynamic>, selectedCategory: ''),
+          ] else ...[
+        Center(child: Text('No restaurants found for this keyword')),
+      ],
+    ]
+
+    ],
+          )
+
+          ]
                 ),
                 const SizedBox(height: 30),
                 CategoryButton(
@@ -175,6 +222,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () {
                   setState(() {
                     selectedPage = 'Profile';
+                    Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => UserProfileScreen(userId: userID,))
+                    );
                   });
                 },
               ),
@@ -215,7 +265,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     );
                   },
                 ),
-
+              /*
               ListTile(
                 leading: const Icon(Icons.settings),
                 title: const Text('Settings'),
@@ -225,6 +275,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   });
                 },
               ),
+              */
               ListTile(
                 leading: const Icon(Icons.logout),
                 title: const Text('Logout'),
@@ -239,32 +290,83 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _searchMenu(String keyword) async {
+    if (keyword.isEmpty) {
+      setState(() {
+        _searchResults.clear();
+      });
+
+      return;
+    } else {
+      _searchKeyword = keyword;
+    }
+
+    // Query both gastropubs and restaurants collections
+    QuerySnapshot gastropubsSnapshot = await FirebaseFirestore.instance
+        .collection('gastropubs')
+        .where('name', isGreaterThanOrEqualTo: keyword)
+        .where('name', isLessThanOrEqualTo: '${keyword}\uf8ff')
+        .get();
+
+    QuerySnapshot restaurantsSnapshot = await FirebaseFirestore.instance
+        .collection('restaurants')
+        .where('name', isGreaterThanOrEqualTo: keyword)
+        .where('name', isLessThanOrEqualTo: '${keyword}\uf8ff')
+        .get();
+
+    setState(() {
+      _searchResults = [...gastropubsSnapshot.docs, ...restaurantsSnapshot.docs];
+    });
+  }
+
+
   Future<void> _fetchUserData() async {
     User? user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
+      userID = user.uid;
       email = user.email!;
-      gastropubData = await getGastropubInfoByEmail(email);
+      if (await fetchRole(email) == 'admin'){
+        userData = await getUserByEmail(email, 'users');
 
-      if (gastropubData != null) {
-        // Use gastropub data
         setState(() {
-          firstName = gastropubData?['first_name'] ?? '';
-          lastName = gastropubData?['last_name'] ?? '';
-          shopName = gastropubData?['shop_name'] ?? '';
-          isSeller = true;
+          firstName = userData?['first_name'] ?? '';
+          lastName = userData?['last_name'] ?? '';
+          shopName = userData?['shop_name'] ?? '';
+          isAdmin = true;
+          isSeller = false;
         });
-      } else {
-        // If not found in gastropubs, search restaurants
-        restaurantData = await getRestaurantInfoByEmail(email);
-        if (restaurantData != null) {
+      } else if (await fetchRole(email) == 'seller'){
+        userData = await getSellerByEmail(email, 'gastropubs');
+        userData ??= await getSellerByEmail(email, 'restaurants');
+
+        if (userData != null) {
+          // Update UI with the fetched data
           setState(() {
-            firstName = restaurantData?['first_name'] ?? '';
-            lastName = restaurantData?['last_name'] ?? '';
-            shopName = restaurantData?['shop_name'] ?? '';
+            firstName = userData?['first_name'] ?? '';
+            lastName = userData?['last_name'] ?? '';
+            shopName = userData?['shop_name'] ?? '';
             isSeller = true;
+            isAdmin = false;
+          });
+        } else {
+          // Handle case where no user data was found
+          setState(() {
+            firstName = '';
+            lastName = '';
+            shopName = '';
+            isSeller = false;
+            isAdmin = false;
           });
         }
+      } else {
+        userData = await getUserByEmail(email, 'users');
+
+        setState(() {
+          firstName = userData?['first_name'] ?? '';
+          lastName = userData?['last_name'] ?? '';
+          isAdmin = false;
+        });
       }
     }
   }
@@ -295,21 +397,58 @@ class _HomeScreenState extends State<HomeScreen> {
       return null;
     }
   }
-/*
-  Future<bool> isUserAdmin(String email) async{
-    try{
-      DocumentSnapshot snapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc()
+
+  Future<Map<String, dynamic>?> getSellerByEmail(String email, String collect) async {
+    try {
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection(collect)
           .where('email_address', isEqualTo: email)
           .get();
-      return snapshot.docs.isNotEmpty ? snapshot.data['isAdmin'];
-    } catch (e){
-      print('Error fetching user role: $e');
-      return false;
+      return snapshot.docs.isNotEmpty ? snapshot.docs.first.data() as Map<String, dynamic> : null;
+    } catch (e) {
+      print("Error fetching user data: $e");
+      return null;
     }
   }
-*/
+
+  Future<Map<String, dynamic>?> getUserByEmail(String email, String collect) async {
+    try {
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection(collect)
+          .where('email_address', isEqualTo: email)
+          .get();
+      return snapshot.docs.isNotEmpty ? snapshot.docs.first.data() as Map<String, dynamic> : null;
+    } catch (e) {
+      print("Error fetching user data: $e");
+      return null;
+    }
+  }
+
+
+  Future<String> fetchRole(String email) async {
+    try {
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email_address', isEqualTo: email)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        final data = snapshot.docs.first.data() as Map<String, dynamic>;
+        if (data['isAdmin'] == true) {
+          return 'admin';
+        } else if (data['isSeller'] == true) {
+          return 'seller';
+        } else {
+          return 'regular';
+        }
+      }
+      return 'no_role';
+    } catch (e) {
+      print('Error fetching user role: $e');
+      return 'no_role';
+    }
+  }
+
   Future<void> signOut() async {
     await FirebaseAuth.instance.signOut();
     Navigator.push(

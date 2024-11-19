@@ -6,8 +6,10 @@ import 'package:northern_delights_app/screens/restaurant_info_screen.dart';
 
 class RestaurantsCard extends StatefulWidget {
   final String selectedCategory;
+  final String? searchKeyword; // New optional parameter for search keyword
+  final Map<String, dynamic>? data;
 
-  const RestaurantsCard({super.key, required this.selectedCategory});
+  const RestaurantsCard({super.key, required this.selectedCategory, this.searchKeyword, this.data});
 
   @override
   _RestaurantsCardState createState() => _RestaurantsCardState();
@@ -21,9 +23,8 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
     return Column(
       children: [
         StreamBuilder<List<Map<String, dynamic>>>(
-          stream: restaurantService.getStream(widget.selectedCategory),
+          stream: restaurantService.getStream(widget.selectedCategory, keyword: widget.searchKeyword),
           builder: (context, snapshot) {
-            print(widget.selectedCategory);
             if (!snapshot.hasData) {
               return Center(child: CircularProgressIndicator());
             }

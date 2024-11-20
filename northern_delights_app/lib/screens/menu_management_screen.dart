@@ -2,9 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class MenuManagementScreen extends StatefulWidget {
-  final String email;
+  final String userId;
 
-  const MenuManagementScreen({required this.email, super.key});
+  const MenuManagementScreen({required this.userId, super.key});
 
   @override
   State<MenuManagementScreen> createState() => _MenuManagementScreenState();
@@ -22,19 +22,18 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
 
   Future<void> _fetchMenuData() async {
     final gastropubData = await _getCollectionData('gastropubs');
+    final restaurantData = await _getCollectionData('restaurants');
+
     if (gastropubData != null) {
       setState(() {
         collectionType = 'gastropubs';
         menuItems = gastropubData;
-        print('GastropubData $gastropubData');
       });
     } else {
-      final restaurantData = await _getCollectionData('restaurants');
       if (restaurantData != null) {
         setState(() {
           collectionType = 'restaurants';
           menuItems = restaurantData;
-          print('RestoData $restaurantData');
         });
       }
     }
@@ -43,12 +42,11 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   Future<List<Map<String, dynamic>>?> _getCollectionData(String collection) async {
     try {
       final snapshot = await FirebaseFirestore.instance
-          .collection(collection)
-          .where('email_address', isEqualTo: widget.email)
+          .collection(collection).doc(widget.userId)
           .get();
 
-      if (snapshot.docs.isNotEmpty) {
-        final docId = snapshot.docs.first.id;
+      if (snapshot.exists) {
+        final docId = snapshot.id;
         final menuSnapshot = await FirebaseFirestore.instance
             .collection(collection)
             .doc(docId)
@@ -73,12 +71,13 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     if (collectionType == null) return;
 
     final collectionRef = FirebaseFirestore.instance.collection(collectionType!);
-    final docSnapshot = await collectionRef.where('email_address', isEqualTo: widget.email).get();
+    final docRef = await collectionRef.doc(widget.userId);
+    final docSnapshot = await docRef.get();
 
-    if (docSnapshot.docs.isNotEmpty) {
-      final docId = docSnapshot.docs.first.id;
+    if (docSnapshot.exists) {
+      final docId = docSnapshot.id;
       final menuCollectionRef = collectionRef.doc(docId).collection('menu');
-      await menuCollectionRef.add({'title': name, 'price': price});
+      await menuCollectionRef.add({'name': name, 'price': price});
 
       _fetchMenuData(); // Refresh menu data
     }
@@ -88,10 +87,11 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     if (collectionType == null) return;
 
     final collectionRef = FirebaseFirestore.instance.collection(collectionType!);
-    final docSnapshot = await collectionRef.where('email_address', isEqualTo: widget.email).get();
+    final docRef = await collectionRef.doc(widget.userId);
+    final docSnapshot = await docRef.get();
 
-    if (docSnapshot.docs.isNotEmpty) {
-      final docId = docSnapshot.docs.first.id;
+    if (docSnapshot.exists) {
+      final docId = docSnapshot.id;
       final menuItemRef = collectionRef.doc(docId).collection('menu').doc(itemId);
       await menuItemRef.update({'name': name, 'price': price});
 
@@ -103,10 +103,11 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     if (collectionType == null) return;
 
     final collectionRef = FirebaseFirestore.instance.collection(collectionType!);
-    final docSnapshot = await collectionRef.where('email_address', isEqualTo: widget.email).get();
+    final docRef = await collectionRef.doc(widget.userId);
+    final docSnapshot = await docRef.get();
 
-    if (docSnapshot.docs.isNotEmpty) {
-      final docId = docSnapshot.docs.first.id;
+    if (docSnapshot.exists) {
+      final docId = docSnapshot.id;
       final menuItemRef = collectionRef.doc(docId).collection('menu').doc(itemId);
       await menuItemRef.delete();
 
@@ -126,14 +127,17 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
               itemBuilder: (context, index) {
                 final menuItem = menuItems[index];
                 return ListTile(
-                  title: Text(menuItem['title'] ?? 'No Title'),
+                  title: Text(menuItem['name'] ?? 'No Name'),
                   subtitle: Text("Price: Php${menuItem['price'] ?? 0.0}"),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
                         icon: Icon(Icons.edit),
-                        onPressed: () => _showEditDialog(menuItem),
+                        onPressed: () {
+                          print('Menu Item: $menuItem');
+                          _showEditDialog(menuItem);
+                          },
                       ),
                       IconButton(
                         icon: Icon(Icons.delete),
@@ -198,8 +202,10 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   }
 
   void _showEditDialog(Map<String, dynamic> menuItem) {
-    String name = menuItem['name'];
-    double price = menuItem['price'];
+    String name = menuItem['name'] ?? 'No Item Name';
+    double price = menuItem['price'] ?? 0.00;
+
+    print('EDIT: $menuItem, $menuItem\[\'name\'\]');
 
     showDialog(
       context: context,

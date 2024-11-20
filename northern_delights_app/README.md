@@ -1,6 +1,6 @@
 # northern_delights_app
 
-A new Flutter project.
+An app that will help you find food place in Vigan City
 
 ## Getting Started
 

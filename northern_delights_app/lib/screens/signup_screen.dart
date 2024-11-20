@@ -28,7 +28,7 @@ class _SignupScreenState extends State<SignupScreen> {
   String? password;
   String? confirmPassword;
   String? _passwordMismatchWarning;
-  String _selectedType = 'Gastropub';
+  String _selectedType = 'Empanadaan';
   String? shop_name;
 
   @override
@@ -116,7 +116,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
                 ),
-                if (widget.isSeller)
+                if (widget.isSeller) ...[
                   const SizedBox(height: 20),
                   SizedBox(
                     width: MediaQuery.of(context).size.width * 0.8,
@@ -134,7 +134,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                     ),
                   ),
-
+                ],
                 const SizedBox(height: 20),
                 SizedBox(
                   width: MediaQuery.of(context).size.width * 0.8,
@@ -176,34 +176,35 @@ class _SignupScreenState extends State<SignupScreen> {
                     _passwordMismatchWarning!,
                     style: TextStyle(color: Colors.red),
                   ),
-                SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      RadioListTile<String>(
-                        title: Text('Gastropub', style: TextStyle(fontSize: 16),),
-                        value: 'gastropubs',
-                        groupValue: _selectedType,
-                        onChanged: (String? value) {
-                          setState(() {
-                            _selectedType = value!;
-                          });
-                        },
-                      ),
-                      RadioListTile<String>(
-                        title: Text('Restaurant', style: TextStyle(fontSize: 16),),
-                        value: 'restaurants',
-                        groupValue: _selectedType,
-                        onChanged: (String? value) {
-                          setState(() {
-                            _selectedType = value!;
-                          });
-                        },
-                      ),
-                    ],
+                if(widget.isSeller)
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.8,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        RadioListTile<String>(
+                          title: Text('Empanadaan', style: TextStyle(fontSize: 16),),
+                          value: 'gastropubs',
+                          groupValue: _selectedType,
+                          onChanged: (String? value) {
+                            setState(() {
+                              _selectedType = value!;
+                            });
+                          },
+                        ),
+                        RadioListTile<String>(
+                          title: Text('Sinanglao\'n', style: TextStyle(fontSize: 16),),
+                          value: 'restaurants',
+                          groupValue: _selectedType,
+                          onChanged: (String? value) {
+                            setState(() {
+                              _selectedType = value!;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                ),
 
                 const SizedBox(height: 30),
                 ElevatedButton(
@@ -245,7 +246,34 @@ class _SignupScreenState extends State<SignupScreen> {
                         child: Text('Sign in'),),
                   ],
                 ),
-          
+                const SizedBox(height: 5,),
+                if(!widget.isSeller) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Are you a seller?'),
+                      TextButton(
+                        onPressed: (){
+                          Navigator.push(context,
+                              MaterialPageRoute(builder: (context)=> SignupScreen(isSeller: true)));
+                        },
+                        child: Text('Signup as Seller'),),
+                    ],
+                  ),
+                ] else ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Signup as user?'),
+                      TextButton(
+                        onPressed: (){
+                          Navigator.push(context,
+                              MaterialPageRoute(builder: (context)=> SignupScreen(isSeller: false)));
+                        },
+                        child: Text('Signup as User'),),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -292,6 +320,7 @@ class _SignupScreenState extends State<SignupScreen> {
           'last_name': lastName,
           'email_address': email,
           'shop_name' : shopName,
+          'store_type' : _selectedType.isNotEmpty ? _selectedType : '',
           'createdAt': FieldValue.serverTimestamp(),
         });
 
@@ -328,6 +357,8 @@ class _SignupScreenState extends State<SignupScreen> {
     try {
 
       await FirebaseFirestore.instance.collection(storeType).doc(uid).set({
+        'first_name': firstName,
+        'last_name': lastName,
         'name': shopName,
         'email_address': email,
         'geopoint': GeoPoint(0.0, 0.0),

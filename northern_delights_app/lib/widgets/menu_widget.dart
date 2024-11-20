@@ -105,7 +105,7 @@ class _MenuDetailsState extends State<MenuDetails> {
                                   Container(
                                     width: MediaQuery.of(context).size.width * 0.5,
                                     child: Text(
-                                      menu['title'] ?? 'No title',
+                                      menu['name'] ?? 'No name',
                                       textAlign: TextAlign.start,
                                       softWrap: true,
                                       overflow: TextOverflow.visible,
@@ -131,7 +131,7 @@ class _MenuDetailsState extends State<MenuDetails> {
                                   const SizedBox(width: 10),
                                   // Price Text
                                   Text(
-                                    value.format(int.parse((menu['price'].toString()))),
+                                    double.parse(menu['price'].toString() ?? '0.00').toStringAsFixed(2),
                                     overflow: TextOverflow.ellipsis,
                                     maxLines: 2,
                                     softWrap: true,
@@ -148,7 +148,7 @@ class _MenuDetailsState extends State<MenuDetails> {
                           const Spacer(), // Pushes the image to the far right
                           // Image
                           Image.network(
-                            menu['photo'],
+                            menu['photo'] ?? 'assets/images/meal-menu.png',
                             fit: BoxFit.contain,
                             alignment: Alignment.center,
                             width: 100,

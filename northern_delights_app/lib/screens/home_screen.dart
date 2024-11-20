@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:northern_delights_app/screens/seller_management_screen.dart';
 import 'package:northern_delights_app/screens/signin_screen.dart';
-import 'package:northern_delights_app/screens/signup_screen.dart';
 import 'package:northern_delights_app/screens/user_management_screen.dart';
 import 'package:northern_delights_app/screens/user_profile_screen.dart';
 import 'package:northern_delights_app/widgets/gastropub_card.dart';
@@ -26,14 +25,14 @@ class _HomeScreenState extends State<HomeScreen> {
   String lastName = '';
   String selectedPage = '';
   String shopName = '';
-  String email = '';
   bool isAdmin = false;
   bool isSeller = false;
   Map<String, dynamic>? userData;
-  String userID = '';
   TextEditingController _searchController = TextEditingController();
   List<DocumentSnapshot> _searchResults = [];
   late String _searchKeyword;
+
+  String? userID;
 
   @override
   void initState() {
@@ -138,7 +137,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               if (_searchResults.any((doc) => doc.reference.parent.id == 'gastropubs')) ...[
                 Text(
-                  'Gastropubs',
+                  'Empanadaan',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                 ),
                 for (var doc in _searchResults.where((doc) => doc.reference.parent.id == 'gastropubs'))
@@ -147,7 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
     if (_searchResults.any((doc) => doc.reference.parent.id == 'restaurants')) ...[
       Text(
-        'Restaurants',
+        'Sinanglao\'n',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
           ),
                     // Show the filtered results
@@ -155,7 +154,7 @@ class _HomeScreenState extends State<HomeScreen> {
           for (var doc in filteredResults.where((doc) => doc.reference.parent.id == 'restaurants'))
           RestaurantsCard(data: doc.data() as Map<String, dynamic>, selectedCategory: ''),
           ] else ...[
-        Center(child: Text('No restaurants found for this keyword')),
+        Center(child: Text('No sinanglao\'n found for this keyword')),
       ],
     ]
 
@@ -170,7 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   selectedCategory: _selectedCategory,
                 ),
                 const SizedBox(height: 20),
-                const Text('Gastropubs',
+                const Text('Empanadaan',
                     style: TextStyle(
                       fontSize: 18,
                       fontFamily: 'Roboto',
@@ -182,7 +181,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: GastropubCards(selectedCategory: _selectedCategory),
                 ),
                 SizedBox(height: 5),
-                Text('Restaurants',
+                Text('Sinanglao\'n',
                     style: TextStyle(
                       fontSize: 18,
                       fontFamily: 'Roboto',
@@ -223,7 +222,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   setState(() {
                     selectedPage = 'Profile';
                     Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => UserProfileScreen(userId: userID,))
+                      MaterialPageRoute(builder: (context) => UserProfileScreen(userId: userID!,))
                     );
                   });
                 },
@@ -260,7 +259,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => MenuManagementScreen(email: email,),
+                        builder: (context) => MenuManagementScreen(userId: userID!,),
                       ),
                     );
                   },
@@ -321,103 +320,111 @@ class _HomeScreenState extends State<HomeScreen> {
 
 
   Future<void> _fetchUserData() async {
-    User? user = FirebaseAuth.instance.currentUser;
+    String? role = await fetchRole();
 
-    if (user != null) {
-      userID = user.uid;
-      email = user.email!;
-      if (await fetchRole(email) == 'admin'){
-        userData = await getUserByEmail(email, 'users');
+    if (role == 'admin'){
+      userData = await getUserByID('users');
 
+      setState(() {
+        firstName = userData?['first_name'] ?? '';
+        lastName = userData?['last_name'] ?? '';
+        shopName = userData?['shop_name'] ?? '';
+        isAdmin = true;
+        isSeller = false;
+        print('FIRSTNAME1: $firstName');
+      });
+    } else if (role == 'seller'){
+      userData ??= await getSellerByID('gastropubs');
+      userData ??= await getSellerByID('restaurants');
+
+      if (userData != null) {
+        // Update UI with the fetched data
         setState(() {
           firstName = userData?['first_name'] ?? '';
           lastName = userData?['last_name'] ?? '';
           shopName = userData?['shop_name'] ?? '';
-          isAdmin = true;
-          isSeller = false;
+          print('FIRSTNAME2: $userData');
         });
-      } else if (await fetchRole(email) == 'seller'){
-        userData = await getSellerByEmail(email, 'gastropubs');
-        userData ??= await getSellerByEmail(email, 'restaurants');
-
-        if (userData != null) {
-          // Update UI with the fetched data
-          setState(() {
-            firstName = userData?['first_name'] ?? '';
-            lastName = userData?['last_name'] ?? '';
-            shopName = userData?['shop_name'] ?? '';
-            isSeller = true;
-            isAdmin = false;
-          });
-        } else {
-          // Handle case where no user data was found
-          setState(() {
-            firstName = '';
-            lastName = '';
-            shopName = '';
-            isSeller = false;
-            isAdmin = false;
-          });
-        }
       } else {
-        userData = await getUserByEmail(email, 'users');
-
+        // Handle case where no user data was found
         setState(() {
-          firstName = userData?['first_name'] ?? '';
-          lastName = userData?['last_name'] ?? '';
-          isAdmin = false;
+          firstName = 'a';
+          lastName = '';
+          shopName = '';
+
+          print('FIRSTNAME3: $firstName');
+          return;
         });
       }
+      isAdmin = false;
+      isSeller = true;
+    } else {
+      userData = await getUserByID('users');
+
+      setState(() {
+        firstName = userData?['first_name'] ?? '';
+        lastName = userData?['last_name'] ?? '';
+        isAdmin = false;
+        print('FIRSTNAME4: $firstName');
+
+      });
     }
+    print('ROLE: $role, $userID');
   }
 
 // Helper methods for querying Firestore
-  Future<Map<String, dynamic>?> getGastropubInfoByEmail(String email) async {
+  Future<Map<String, dynamic>?> getGastropubInfoByID() async {
     try {
-      QuerySnapshot snapshot = await FirebaseFirestore.instance
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
           .collection('gastropubs')
-          .where('email_address', isEqualTo: email)
+          .doc(userID)
           .get();
-      return snapshot.docs.isNotEmpty ? snapshot.docs.first.data() as Map<String, dynamic> : null;
+
+      return snapshot.exists ? snapshot.data() as Map<String, dynamic> : null;
     } catch (e) {
       print("Error fetching gastropub data: $e");
       return null;
     }
   }
 
-  Future<Map<String, dynamic>?> getRestaurantInfoByEmail(String email) async {
+  Future<Map<String, dynamic>?> getRestaurantInfoByID() async {
     try {
-      QuerySnapshot snapshot = await FirebaseFirestore.instance
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
           .collection('restaurants')
-          .where('email_address', isEqualTo: email)
+          .doc(userID)
           .get();
-      return snapshot.docs.isNotEmpty ? snapshot.docs.first.data() as Map<String, dynamic> : null;
+
+      return snapshot.exists ? snapshot.data() as Map<String, dynamic> : null;
     } catch (e) {
       print("Error fetching restaurant data: $e");
       return null;
     }
   }
 
-  Future<Map<String, dynamic>?> getSellerByEmail(String email, String collect) async {
+  Future<Map<String, dynamic>?> getSellerByID(String collect) async {
     try {
-      QuerySnapshot snapshot = await FirebaseFirestore.instance
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
           .collection(collect)
-          .where('email_address', isEqualTo: email)
+          .doc(userID)
           .get();
-      return snapshot.docs.isNotEmpty ? snapshot.docs.first.data() as Map<String, dynamic> : null;
+
+      return snapshot.exists ? snapshot.data() as Map<String, dynamic> : null;
+
     } catch (e) {
       print("Error fetching user data: $e");
       return null;
     }
   }
 
-  Future<Map<String, dynamic>?> getUserByEmail(String email, String collect) async {
+  Future<Map<String, dynamic>?> getUserByID(String collect) async {
     try {
-      QuerySnapshot snapshot = await FirebaseFirestore.instance
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
           .collection(collect)
-          .where('email_address', isEqualTo: email)
+          .doc(userID)
           .get();
-      return snapshot.docs.isNotEmpty ? snapshot.docs.first.data() as Map<String, dynamic> : null;
+
+      return snapshot.exists ? snapshot.data() as Map<String, dynamic> : null;
+
     } catch (e) {
       print("Error fetching user data: $e");
       return null;
@@ -425,15 +432,24 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
 
-  Future<String> fetchRole(String email) async {
+  Future<String> fetchRole() async {
     try {
-      QuerySnapshot snapshot = await FirebaseFirestore.instance
+
+      User? user = FirebaseAuth.instance.currentUser;
+      userID = user?.uid;
+
+      if (userID!.isEmpty) {
+        print('Error: userId is empty.');
+        return 'err: invalid_userID';
+      }
+
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
           .collection('users')
-          .where('email_address', isEqualTo: email)
+          .doc(userID)
           .get();
 
-      if (snapshot.docs.isNotEmpty) {
-        final data = snapshot.docs.first.data() as Map<String, dynamic>;
+      if (snapshot.exists) {
+        final data = snapshot.data() as Map<String, dynamic>;
         if (data['isAdmin'] == true) {
           return 'admin';
         } else if (data['isSeller'] == true) {
@@ -441,11 +457,12 @@ class _HomeScreenState extends State<HomeScreen> {
         } else {
           return 'regular';
         }
+      } else {
+        return 'regular';
       }
-      return 'no_role';
     } catch (e) {
       print('Error fetching user role: $e');
-      return 'no_role';
+      return 'err: no_role';
     }
   }
 

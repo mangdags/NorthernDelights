@@ -299,7 +299,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
             .height;
 
 
-        GeoPoint geoPoint = gastro['gastro_geopoint'];
+        GeoPoint geoPoint = gastro['geopoint'];
         double lat = geoPoint.latitude;
         double long = geoPoint.longitude;
 
@@ -330,7 +330,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: Image.network(
-                    gastro['gastro_image_url'],
+                    gastro['image_url'],
                     fit: BoxFit.cover,
                     width: 220,
                     height: 300,
@@ -367,7 +367,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              gastro['gastro_name'],
+                              gastro['name'],
                               style: const TextStyle(
                                 fontSize: 23,
                                 fontWeight: FontWeight.bold,
@@ -386,7 +386,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                                 ),
                                 SizedBox(width: 5),
                                 Text(
-                                  gastro['gastro_location'],
+                                  gastro['location'],
                                   style: TextStyle(
                                     color: Colors.white70,
                                     fontSize: 16,
@@ -407,7 +407,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                                 ),
                                 SizedBox(width: 8),
                                 Text(
-                                  gastro['gastro_rating'].toString(),
+                                  gastro['rating'].toString(),
                                   style: TextStyle(
                                     color: Colors.white70,
                                     fontSize: 16,

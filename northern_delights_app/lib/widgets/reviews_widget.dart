@@ -54,6 +54,10 @@ class _ReviewsDetailsState extends State<ReviewsDetails> {
                 ? streamSnapshot.data!
                 : initialReviewList;
 
+            if(!snapshot.hasData) {
+              return Text('No Reviews Yet');
+            }
+
             return SingleChildScrollView(
               child: Column(
                 children: reviewList.map((reviews) {

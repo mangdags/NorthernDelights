@@ -60,7 +60,7 @@ class _GastropubCardsState extends State<GastropubCards> {
                                                     child: ClipRRect(
                                                         borderRadius: BorderRadius.circular(20),
                                                         child: Image.network(
-                                                            gastropub['gastro_image_url'],
+                                                            gastropub['image_url'],
                                                             fit: BoxFit.cover,
                                                             width: 220,
                                                             height: 300,
@@ -98,7 +98,7 @@ class _GastropubCardsState extends State<GastropubCards> {
                                                                     crossAxisAlignment: CrossAxisAlignment.start,
                                                                     children: [
                                                                         Text(
-                                                                            gastropub['gastro_name'],
+                                                                            gastropub['name'],
                                                                             maxLines: 1,
                                                                             overflow: TextOverflow.ellipsis,
                                                                             style: TextStyle(
@@ -118,7 +118,7 @@ class _GastropubCardsState extends State<GastropubCards> {
                                                                                 ),
                                                                                 SizedBox(width: 5),
                                                                                 Text(
-                                                                                    gastropub['gastro_location'],
+                                                                                    gastropub['location'],
                                                                                     style: TextStyle(
                                                                                         color: Colors.white70,
                                                                                         fontSize: 12,
@@ -138,7 +138,7 @@ class _GastropubCardsState extends State<GastropubCards> {
                                                                                 ),
                                                                                 SizedBox(width: 8),
                                                                                 Text(
-                                                                                    gastropub['gastro_rating'].toString(),
+                                                                                    gastropub['rating'].toString(),
                                                                                     style: TextStyle(
                                                                                         color: Colors.white70,
                                                                                         fontSize: 12,

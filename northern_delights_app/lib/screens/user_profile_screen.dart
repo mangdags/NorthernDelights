@@ -1,7 +1,9 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:google_maps_webservice/directions.dart';
-import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final String userId;
@@ -14,6 +16,8 @@ class UserProfileScreen extends StatefulWidget {
 
 class _UserProfileScreenState extends State<UserProfileScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
+
   late TextEditingController firstNameController;
   late TextEditingController lastNameController;
   late TextEditingController shopNameController;
@@ -32,6 +36,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   late bool isAdmin;
   late bool isSeller;
   bool isLoading = true;
+
+  File? _selectedImage;
+  String? _imageUrl;
+  bool isUploading = false;
+
+  final ImagePicker _imagePicker = ImagePicker();
 
   @override
   void initState() {
@@ -74,6 +84,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
         _locationController.text = doc['location'] ?? '';
         _overviewController.text = doc['overview'] ?? '';
+
+        _geoPoint = doc.data()?['geopoint'];
+        _latController.text = _geoPoint.latitude.toString();
+        _longController.text = _geoPoint.longitude.toString();
+
         isLoading = false;
       });
     } else {
@@ -103,16 +118,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
     if(isSeller) {
       await FirebaseFirestore.instance.collection(type).doc(widget.userId).update({
-        'first_name' : firstNameController.text,
-        'last_name' : lastNameController.text,
         'name' : shopNameController.text,
         'open_time': openTimestamp,
         'close_time': closeTimestamp,
         'location' : _locationController.text,
         'overview' : _overviewController.text,
+        'geopoint' : GeoPoint(latitude!, longitude!),
       });
 
-      if (latitude != null && longitude != null) {
+      if (!latitude.isNaN && !longitude.isNaN) {
         setState(() {
           _geoPoint = GeoPoint(latitude, longitude);
         });
@@ -121,17 +135,21 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           content: Text('Please enter valid latitude and longitude'),
         ));
       }
-    } else {
-      await _firestore.collection('users').doc(widget.userId).update({
-        'first_name': firstNameController.text,
-        'last_name': lastNameController.text,
-        'shop_name': shopNameController.text,
-        //'geopoint': _geoPoint,
-      });
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Profile updated successfully')),
-    );
+
+    await _firestore.collection('users').doc(widget.userId).update({
+      'first_name': firstNameController.text,
+      'last_name': lastNameController.text,
+      'shop_name': shopNameController.text,
+    });
+
+    _uploadImage();
+
+    if(!isUploading){
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile updated successfully')),
+      );
+    }
   }
 
   DateTime convertToDateTime(TimeOfDay? timeOfDay) {
@@ -200,6 +218,51 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     return '$hours:${minutes.toString().padLeft(2, '0')} $period';
   }
 
+  Future<void> _pickImage() async {
+    final pickedFile = await _imagePicker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+      });
+    }
+  }
+
+
+  Future<void> _uploadImage() async {
+    if (_selectedImage == null || isUploading) return;
+
+    setState(() {
+      isUploading = true;
+    });
+
+    final fileName = '${widget.userId}.png';
+    final storageRef = _storage.ref().child('$storeType/$fileName');
+
+    try {
+      final uploadTask = await storageRef.putFile(_selectedImage!);
+      final imageUrl = await uploadTask.ref.getDownloadURL();
+
+      setState(() {
+        _imageUrl = imageUrl;
+      });
+
+      await _firestore.collection(storeType).doc(widget.userId).update({
+        'image_url': _imageUrl,
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile updated successfully!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Image upload failed: $e')),
+      );
+    } finally{
+      setState(() {
+        isUploading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -212,6 +275,19 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
+              // Profile Image
+              GestureDetector(
+                onTap: _pickImage,
+                child: CircleAvatar(
+                  radius: 60,
+                  backgroundImage: _selectedImage != null
+                      ? FileImage(_selectedImage!)
+                      : (_imageUrl != null ? NetworkImage(_imageUrl!) as ImageProvider : null),
+                  child: _selectedImage == null && _imageUrl == null
+                      ? const Icon(Icons.camera_alt, size: 40)
+                      : null,
+                ),
+              ),
               // First Name Field
               TextField(
                 controller: firstNameController,
@@ -330,12 +406,16 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),  // Vertical space before the save button
+                const SizedBox(height: 20),
 
                 // Save Button
                 ElevatedButton(
-                  onPressed: () => _updateProfile(isSeller, storeType),
-                  child: const Text('Save Changes'),
+                  onPressed: isUploading
+                      ? null // Disable the button while uploading
+                      : () => _updateProfile(isSeller, storeType),
+                    child: isUploading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Save Changes'),
                 ),
               ],
 

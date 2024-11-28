@@ -6,8 +6,9 @@ import 'package:northern_delights_app/screens/gastropub_info_screen.dart';
 
 class GastropubCards extends StatefulWidget {
     final String selectedCategory;
+    final bool isRegular;
 
-    const GastropubCards({super.key, required this.selectedCategory});
+    const GastropubCards({super.key, required this.selectedCategory, required this.isRegular});
 
     @override
     _GastropubCardsState createState() => _GastropubCardsState();
@@ -35,7 +36,9 @@ class _GastropubCardsState extends State<GastropubCards> {
                                         context,
                                         MaterialPageRoute(
                                             builder: (context) => GastropubInfo(
+                                                isRegular: widget.isRegular,
                                                 gastropubID: gastropub['id'],
+
                                             ),
                                         ),
                                     );

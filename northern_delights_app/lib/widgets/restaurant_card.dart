@@ -8,8 +8,9 @@ class RestaurantsCard extends StatefulWidget {
   final String selectedCategory;
   final String? searchKeyword; // New optional parameter for search keyword
   final Map<String, dynamic>? data;
+  final bool isRegular;
 
-  const RestaurantsCard({super.key, required this.selectedCategory, this.searchKeyword, this.data});
+  const RestaurantsCard({super.key, required this.selectedCategory, this.searchKeyword, this.data, required this.isRegular});
 
   @override
   _RestaurantsCardState createState() => _RestaurantsCardState();
@@ -36,6 +37,7 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => RestaurantInfo(
+                        isRegular: widget.isRegular,
                         restaurantID: resto['id'],
                       ),
                     ),

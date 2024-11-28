@@ -28,7 +28,6 @@ class GastropubMostViewed {
       }).toList();
     });
   }
-
 }
 
 class GastropubLatestAdded {

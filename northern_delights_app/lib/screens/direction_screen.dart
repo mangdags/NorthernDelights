@@ -9,7 +9,12 @@ class DirectionsMapScreen extends StatefulWidget {
   final double destinationLat;
   final String destinationName;
 
-  const DirectionsMapScreen({super.key, required this.destinationLat, required this.destinationLong, required this.destinationName,});
+  const DirectionsMapScreen({
+    super.key,
+    required this.destinationLat,
+    required this.destinationLong,
+    required this.destinationName,
+  });
 
   @override
   _DirectionsMapScreenState createState() => _DirectionsMapScreenState();
@@ -39,18 +44,20 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
   }
 
   void _addDestinationMarker() {
-    setState(() {
-      _markers.add(
-        Marker(
-          markerId: MarkerId('destination'),
-          position: LatLng(widget.destinationLat, widget.destinationLong),
-          infoWindow: InfoWindow(
-            title: widget.destinationName,
+    if((widget.destinationLat != null && widget.destinationLong != null)){
+      setState(() {
+        _markers.add(
+          Marker(
+            markerId: MarkerId('destination'),
+            position: LatLng(widget.destinationLat, widget.destinationLong),
+            infoWindow: InfoWindow(
+              title: widget.destinationName,
+            ),
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
           ),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-        ),
-      );
-    });
+        );
+      });
+    }
   }
 
   void _checkPermissions() async {
@@ -159,7 +166,7 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
       appBar: AppBar(title: Text("Directions to ${widget.destinationName}")),
       body: GoogleMap(
         initialCameraPosition: CameraPosition(
-          target: _currentLocation ?? LatLng(0, 0), // (0, 0) as fallback
+          target: _currentLocation ?? LatLng(0.0, 0.0), // (0, 0) as fallback
           zoom: 14,
         ),
         onMapCreated: (controller) {
@@ -181,6 +188,7 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
               width: 5,
             ),
         },
+
       ),
       floatingActionButton: Column(
         mainAxisAlignment: MainAxisAlignment.end,

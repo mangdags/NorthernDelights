@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:northern_delights_app/screens/direction_screen.dart';
+import 'package:northern_delights_app/screens/leave_review_screen.dart';
 import 'package:northern_delights_app/widgets/menu_widget.dart';
 import 'package:northern_delights_app/widgets/reviews_widget.dart';
 
@@ -14,10 +15,12 @@ double? screenWidth;
 class GastropubInfo extends StatefulWidget {
   const GastropubInfo({
     required this.gastropubID,
+    required this.isRegular,
     super.key,
   });
 
   final String gastropubID;
+  final bool isRegular;
 
   @override
   _GastropubInfoState createState() => _GastropubInfoState();
@@ -42,6 +45,7 @@ class _GastropubInfoState extends State<GastropubInfo> {
       });
     });
     _incrementViewCount();
+    updateAverageRating(widget.gastropubID);
   }
 
   void _incrementViewCount() async {
@@ -50,7 +54,7 @@ class _GastropubInfoState extends State<GastropubInfo> {
           .collection('gastropubs')
           .doc(widget.gastropubID)
           .update({
-        'gastro_view_count': FieldValue.increment(1),
+        'view_count': FieldValue.increment(1),
       });
     } catch (e) {
       print('Error incrementing view count: $e'); //for debugging only
@@ -84,8 +88,8 @@ class _GastropubInfoState extends State<GastropubInfo> {
               }
 
               var gastro = snapshot.data!.data() as Map<String, dynamic>;
-              String gastroOverview = gastro['gastro_overview'] ?? '';
-              gastroName = gastro['gastro_name'];
+              String gastroOverview = gastro['overview'] ?? '';
+              gastroName = gastro['name'];
 
               return SingleChildScrollView(
                 controller: _scrollController,
@@ -135,9 +139,19 @@ class _GastropubInfoState extends State<GastropubInfo> {
                     ),
                     if (selectedTab == Tab.Overview) _buildText(gastroOverview),
                     if (selectedTab == Tab.Menu) _menuDetails(),
-                    if (selectedTab == Tab.Review)
+                    if (selectedTab == Tab.Review) ... [
                       _reviewDetails(),
-                    const SizedBox(height: 100), //Prevent clipping
+                      if(widget.isRegular) ... [
+                        const SizedBox(height: 20,),
+
+                        ElevatedButton(onPressed: () => Navigator.push(
+                            context, MaterialPageRoute(builder: (context) => LeaveReviewScreen(collectionType: 'gastropubs' ,restaurantGastropubId: widget.gastropubID))),
+                          child: Text('Add Review'),),
+                      ],
+                    ],
+
+                    const SizedBox(height: 100),
+                    //Prevent clipping
                   ],
                 ),
               );
@@ -249,6 +263,40 @@ class _GastropubInfoState extends State<GastropubInfo> {
         ),
       ),
     );
+  }
+
+  Future<void> updateAverageRating(String docId) async {
+    final firestore = FirebaseFirestore.instance;
+
+    try {
+      final reviewsCollection = firestore
+          .collection('gastropubs')
+          .doc(docId)
+          .collection('reviews');
+
+      final querySnapshot = await reviewsCollection.get();
+
+      if (querySnapshot.docs.isEmpty) {
+        print('No reviews found for $docId.');
+        await firestore.collection('gastropubs').doc(docId).update({'rating': 0.00});
+        return;
+      }
+
+      final starRatings = querySnapshot.docs
+          .map((doc) => doc['star'] as num)
+          .toList();
+
+      final averageRating = starRatings.reduce((a, b) => a + b) / starRatings.length;
+      final formattedRating = double.parse(averageRating.toStringAsFixed(2));
+
+      await firestore
+          .collection('gastropubs')
+          .doc(docId)
+          .update({'rating': formattedRating});
+
+    } catch (e) {
+      print('Error updating rating: $e');
+    }
   }
 
   Widget _buildText(String gastroOverview) {

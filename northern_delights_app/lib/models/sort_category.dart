@@ -24,12 +24,10 @@ class _CategorizedScreenState extends State<CategorizedScreen> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Pass the callback to update the selected category
         CategoryButton(onCategorySelected: _onCategorySelected, selectedCategory: _selectedCategory),
 
-        // Pass the selected category to GastropubCards
         Expanded(
-          child: GastropubCards(selectedCategory: _selectedCategory),
+          child: GastropubCards(isRegular: true, selectedCategory: _selectedCategory),
         ),
       ],
     );

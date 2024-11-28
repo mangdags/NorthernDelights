@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:northern_delights_app/screens/reviews_screen.dart';
 import 'package:northern_delights_app/screens/seller_management_screen.dart';
 import 'package:northern_delights_app/screens/signin_screen.dart';
 import 'package:northern_delights_app/screens/user_management_screen.dart';
@@ -10,6 +11,7 @@ import 'package:northern_delights_app/widgets/gastropub_card.dart';
 import 'package:northern_delights_app/widgets/restaurant_card.dart';
 import 'package:northern_delights_app/widgets/category_button.dart';
 
+import '../models/update_average_rating.dart';
 import 'menu_management_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -25,6 +27,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String lastName = '';
   String selectedPage = '';
   String shopName = '';
+  String storeType = '';
+
   bool isAdmin = false;
   bool isSeller = false;
   Map<String, dynamic>? userData;
@@ -38,6 +42,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _fetchUserData();
+    updateAllRatings('gastropubs');
+    updateAllRatings('restaurants');
   }
 
   void _onCategorySelected(String category) {
@@ -152,8 +158,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     // Show the filtered results
           if (filteredResults.isNotEmpty) ...[
           for (var doc in filteredResults.where((doc) => doc.reference.parent.id == 'restaurants'))
-          RestaurantsCard(data: doc.data() as Map<String, dynamic>, selectedCategory: ''),
-          ] else ...[
+          //RestaurantsCard(data: doc.data() as Map<String, dynamic>, selectedCategory: ''),
+          //] else ...[
         Center(child: Text('No sinanglao\'n found for this keyword')),
       ],
     ]
@@ -178,7 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 20),
                 SizedBox(
                   height: 320,
-                  child: GastropubCards(selectedCategory: _selectedCategory),
+                  child: GastropubCards(isRegular: !isSeller, selectedCategory: _selectedCategory),
                 ),
                 SizedBox(height: 5),
                 Text('Sinanglao\'n',
@@ -190,7 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 10),
                 SizedBox(
                   height: 320,
-                  child: RestaurantsCard(selectedCategory: _selectedCategory),
+                  child: RestaurantsCard(isRegular: !isSeller, selectedCategory: _selectedCategory),
                 ),
               ],
             ),
@@ -264,6 +270,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     );
                   },
                 ),
+              if(isSeller)
+                ListTile(
+                  leading: Icon(Icons.reviews),
+                  title: Text('Reviews'),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ReviewsScreen(userId: userID!, storeType: storeType,),
+                      ),
+                    );
+                  },
+                ),
               /*
               ListTile(
                 leading: const Icon(Icons.settings),
@@ -331,28 +350,29 @@ class _HomeScreenState extends State<HomeScreen> {
         shopName = userData?['shop_name'] ?? '';
         isAdmin = true;
         isSeller = false;
-        print('FIRSTNAME1: $firstName');
       });
     } else if (role == 'seller'){
-      userData ??= await getSellerByID('gastropubs');
-      userData ??= await getSellerByID('restaurants');
+
+      userData = await getSellerByID('gastropubs');
+      if (userData == null) {
+        userData = await getSellerByID('restaurants');
+        storeType = 'restaurants';
+      }else{
+        storeType = 'gastropubs';
+      }
 
       if (userData != null) {
-        // Update UI with the fetched data
         setState(() {
           firstName = userData?['first_name'] ?? '';
           lastName = userData?['last_name'] ?? '';
           shopName = userData?['shop_name'] ?? '';
-          print('FIRSTNAME2: $userData');
         });
       } else {
-        // Handle case where no user data was found
         setState(() {
-          firstName = 'a';
+          firstName = '';
           lastName = '';
           shopName = '';
 
-          print('FIRSTNAME3: $firstName');
           return;
         });
       }
@@ -365,11 +385,9 @@ class _HomeScreenState extends State<HomeScreen> {
         firstName = userData?['first_name'] ?? '';
         lastName = userData?['last_name'] ?? '';
         isAdmin = false;
-        print('FIRSTNAME4: $firstName');
 
       });
     }
-    print('ROLE: $role, $userID');
   }
 
 // Helper methods for querying Firestore

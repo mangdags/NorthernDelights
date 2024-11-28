@@ -288,7 +288,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       : null,
                 ),
               ),
-              // First Name Field
               TextField(
                 controller: firstNameController,
                 decoration: const InputDecoration(labelText: 'First Name'),

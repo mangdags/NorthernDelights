@@ -6,6 +6,8 @@ import 'package:northern_delights_app/screens/direction_screen.dart';
 import 'package:northern_delights_app/widgets/menu_widget.dart';
 import 'package:northern_delights_app/widgets/reviews_widget.dart';
 
+import 'leave_review_screen.dart';
+
 enum Tab { Overview, Menu, Review }
 
 double? screenHeight;
@@ -14,10 +16,12 @@ double? screenWidth;
 class RestaurantInfo extends StatefulWidget {
   const RestaurantInfo({
     required this.restaurantID,
+    required this.isRegular,
     super.key,
   });
 
   final String restaurantID;
+  final bool isRegular;
 
   @override
   _RestaurantInfoState createState() => _RestaurantInfoState();
@@ -135,8 +139,16 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
                     ),
                     if (selectedTab == Tab.Overview) _buildText(restoOverview),
                     if (selectedTab == Tab.Menu) _menuDetails(),
-                    if (selectedTab == Tab.Review)
+                    if (selectedTab == Tab.Review) ... [
                       _reviewDetails(),
+                      if(widget.isRegular) ... [
+                        const SizedBox(height: 20,),
+
+                        ElevatedButton(onPressed: () => Navigator.push(
+                            context, MaterialPageRoute(builder: (context) => LeaveReviewScreen(collectionType: 'restaurants',restaurantGastropubId: widget.restaurantID))),
+                          child: Text('Add Review'),),
+                      ],
+                    ],
                     const SizedBox(height: 100), //Prevent clipping
                   ],
                 ),
@@ -249,6 +261,40 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
         ),
       ),
     );
+  }
+
+  Future<void> updateAverageRating(String docId) async {
+    final firestore = FirebaseFirestore.instance;
+
+    try {
+      final reviewsCollection = firestore
+          .collection('restaurants')
+          .doc(docId)
+          .collection('reviews');
+
+      final querySnapshot = await reviewsCollection.get();
+
+      if (querySnapshot.docs.isEmpty) {
+        print('No reviews found for $docId.');
+        await firestore.collection('restaurants').doc(docId).update({'rating': 0.00});
+        return;
+      }
+
+      final starRatings = querySnapshot.docs
+          .map((doc) => doc['star'] as num)
+          .toList();
+
+      final averageRating = starRatings.reduce((a, b) => a + b) / starRatings.length;
+      final formattedRating = double.parse(averageRating.toStringAsFixed(2));
+
+      await firestore
+          .collection('restaurants')
+          .doc(docId)
+          .update({'rating': formattedRating});
+
+    } catch (e) {
+      print('Error updating rating: $e');
+    }
   }
 
   Widget _buildText(String restoOverview) {

@@ -11,6 +11,7 @@ class CategorizedScreen extends StatefulWidget {
 }
 
 class _CategorizedScreenState extends State<CategorizedScreen> {
+  
   String _selectedCategory = 'Most Viewed';
 
   // Update selected category

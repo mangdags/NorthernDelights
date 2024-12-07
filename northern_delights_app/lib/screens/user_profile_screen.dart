@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:northern_delights_app/screens/pin_location_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final String userId;
@@ -25,7 +26,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   final TextEditingController _longController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _overviewController = TextEditingController();
-  late GeoPoint _geoPoint;
+  //late GeoPoint _geoPoint;
   late Timestamp openingTime = Timestamp.fromDate(DateTime(2000, 1, 1, 9, 0)); // Default to 9:00 AM
   late Timestamp closingTime = Timestamp.fromDate(DateTime(2000, 1, 1, 17, 0)); //
   late TimeOfDay openTimeOfDay;
@@ -85,9 +86,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         _locationController.text = doc['location'] ?? '';
         _overviewController.text = doc['overview'] ?? '';
 
-        _geoPoint = doc.data()?['geopoint'];
-        _latController.text = _geoPoint.latitude.toString();
-        _longController.text = _geoPoint.longitude.toString();
+        // _geoPoint = doc.data()?['geopoint'];
+        // _latController.text = _geoPoint.latitude.toString();
+        // _longController.text = _geoPoint.longitude.toString();
 
         isLoading = false;
       });
@@ -123,18 +124,18 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         'close_time': closeTimestamp,
         'location' : _locationController.text,
         'overview' : _overviewController.text,
-        'geopoint' : GeoPoint(latitude!, longitude!),
+        //'geopoint' : GeoPoint(latitude!, longitude!),
       });
 
-      if (!latitude.isNaN && !longitude.isNaN) {
-        setState(() {
-          _geoPoint = GeoPoint(latitude, longitude);
-        });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Please enter valid latitude and longitude'),
-        ));
-      }
+      // if (!latitude.isNaN && !longitude.isNaN) {
+      //   setState(() {
+      //     _geoPoint = GeoPoint(latitude, longitude);
+      //   });
+      // } else {
+      //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      //     content: Text('Please enter valid latitude and longitude'),
+      //   ));
+      // }
     }
 
     await _firestore.collection('users').doc(widget.userId).update({
@@ -179,7 +180,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     if (picked != null) {
       setState(() {
         _selectedOpenTime = picked;
-        print('Selected Open Time: $_selectedOpenTime');
       });
     }
   }
@@ -197,7 +197,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     if (picked != null) {
       setState(() {
         _selectedCloseTime = picked;
-        print('Selected Close Time: $_selectedCloseTime');
       });
     }
   }
@@ -364,25 +363,35 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 const SizedBox(height: 20),  // Space after the divider
 
                 // Latitude and Longitude input fields
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _latController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(labelText: 'Latitude'),
-                      ),
-                    ),
-                    const SizedBox(width: 20),  // Horizontal space
-                    Expanded(
-                      child: TextField(
-                        controller: _longController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(labelText: 'Longitude'),
-                      ),
-                    ),
-                  ],
+                // Row(
+                //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                //   children: [
+                //     Expanded(
+                //       child: TextField(
+                //         controller: _latController,
+                //         keyboardType: TextInputType.number,
+                //         decoration: InputDecoration(labelText: 'Latitude'),
+                //       ),
+                //     ),
+                //     const SizedBox(width: 20),  // Horizontal space
+                //     Expanded(
+                //       child: TextField(
+                //         controller: _longController,
+                //         keyboardType: TextInputType.number,
+                //         decoration: InputDecoration(labelText: 'Longitude'),
+                //       ),
+                //     ),
+                //   ],
+                // ),
+
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => PinLocationScreen(sellerId: widget.userId, storeType: storeType)));
+                  },
+                  style: ElevatedButton.styleFrom(
+                    fixedSize: Size(300, 50),
+                  ),
+                  child: const Text('Set Location'),
                 ),
                 const SizedBox(height: 20),
 

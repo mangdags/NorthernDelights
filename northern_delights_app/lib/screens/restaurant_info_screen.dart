@@ -13,6 +13,11 @@ enum Tab { Overview, Menu, Review }
 double? screenHeight;
 double? screenWidth;
 
+late Timestamp openingTime;
+late Timestamp closingTime;
+late TimeOfDay openTimeOfDay;
+late TimeOfDay closeTimeOfDay;
+
 class RestaurantInfo extends StatefulWidget {
   const RestaurantInfo({
     required this.restaurantID,
@@ -275,7 +280,6 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
       final querySnapshot = await reviewsCollection.get();
 
       if (querySnapshot.docs.isEmpty) {
-        print('No reviews found for $docId.');
         await firestore.collection('restaurants').doc(docId).update({'rating': 0.00});
         return;
       }
@@ -322,6 +326,23 @@ class FoodPlaceInfoWidget extends StatelessWidget {
   final String restoID;
   final Function(double lat, double long) onLocationUpdated; // Callback definition
 
+  String convertToDateString(TimeOfDay? timeOfDay) {
+
+    if (timeOfDay == null) {
+      return '00:00';
+    }
+    final hours = timeOfDay.hourOfPeriod; // Gets the hour in 12-hour format
+    final minutes = timeOfDay.minute;
+    final period = timeOfDay.period == DayPeriod.am ? 'AM' : 'PM';
+
+    return '$hours:${minutes.toString().padLeft(2, '0')} $period';
+  }
+
+  TimeOfDay convertToTimeOfDay(Timestamp timestamp) {
+    final dateTime = timestamp.toDate();
+    return TimeOfDay(hour: dateTime.hour, minute: dateTime.minute);
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DocumentSnapshot>(
@@ -343,6 +364,13 @@ class FoodPlaceInfoWidget extends StatelessWidget {
             .of(context)
             .size
             .height;
+
+
+        openingTime = resto['open_time'];
+        closingTime = resto['close_time'];
+
+        openTimeOfDay = convertToTimeOfDay(openingTime);
+        closeTimeOfDay = convertToTimeOfDay(closingTime);
 
 
         GeoPoint geoPoint = resto['geopoint'];
@@ -402,7 +430,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                     filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
                     child: Container(
                       width: 330,
-                      height: 120,
+                      height: 147,
                       decoration: BoxDecoration(
                         color: Colors.black.withOpacity(0.4),
                         borderRadius: BorderRadius.circular(20),
@@ -454,6 +482,37 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                                 SizedBox(width: 8),
                                 Text(
                                   resto['rating'].toString(),
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 5),
+                            Row(
+                              children: [
+                                Icon(Icons.access_time_outlined, color: Colors.white70,size: 16),
+
+                                SizedBox(width: 8),
+                                Text(
+                                  convertToDateString(openTimeOfDay),
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  '-',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  convertToDateString(closeTimeOfDay),
                                   style: TextStyle(
                                     color: Colors.white70,
                                     fontSize: 16,

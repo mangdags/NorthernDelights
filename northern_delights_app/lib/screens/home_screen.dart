@@ -221,18 +221,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 )
                     : Text(''),
               ),
-              ListTile(
-                leading: const Icon(Icons.account_circle),
-                title: const Text('Profile'),
-                onTap: () {
-                  setState(() {
-                    selectedPage = 'Profile';
-                    Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => UserProfileScreen(userId: userID!,))
-                    );
-                  });
-                },
-              ),
+              if(!isSeller)
+                ListTile(
+                  leading: const Icon(Icons.account_circle),
+                  title: const Text('Profile'),
+                  onTap: () {
+                    setState(() {
+                      selectedPage = 'Profile';
+                      Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => UserProfileScreen(userId: userID!,))
+                      );
+                    });
+                  },
+                ),
               if (isAdmin)
                 ListTile(
                   leading: const Icon(Icons.supervisor_account),

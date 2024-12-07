@@ -177,7 +177,6 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                       IconButton(
                         icon: Icon(Icons.edit),
                         onPressed: () {
-                          print('Menu Item: $menuItem');
                           _showEditDialog(menuItem);
                           },
                       ),

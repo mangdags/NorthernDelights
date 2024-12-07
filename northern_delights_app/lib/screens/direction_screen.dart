@@ -41,6 +41,20 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
     _checkPermissions();
     _getCurrentLocation(); // Get current location
     _addDestinationMarker();
+    _initializeLocation();
+  }
+
+  void _initializeLocation() {
+    _locationSubscription = _location.onLocationChanged.listen((locationData) {
+      if (mounted && _controller != null) {
+        final newLocation = LatLng(locationData.latitude!, locationData.longitude!);
+        if (_currentLocation == null || _currentLocation != newLocation) {
+          setState(() {
+            _currentLocation = newLocation;
+          });
+        }
+      }
+    });
   }
 
   void _addDestinationMarker() {
@@ -102,29 +116,30 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
   }
 
   Future<void> _getDirections(LatLng destination) async {
-    if (_currentLocation == null) return; // Ensure _currentLocation is available, return if null
+    try {
+      if (_currentLocation == null) return;
+      final origin = gmaps.Location(lat: _currentLocation!.latitude, lng: _currentLocation!.longitude);
+      final dest = gmaps.Location(lat: destination.latitude, lng: destination.longitude);
 
-    final origin = gmaps.Location(lat: _currentLocation!.latitude, lng: _currentLocation!.longitude);
-    final dest = gmaps.Location(lat: destination.latitude, lng: destination.longitude);
+      final directions = await _directions.directions(origin, dest);
 
-    // Request directions
-    final directions = await _directions.directions(origin, dest);
+      if (directions.isOkay && directions.routes.isNotEmpty) {
+        final route = directions.routes.first;
+        final polylinePoints = _decodePoly(route.overviewPolyline.points);
 
-    if (directions.isOkay && directions.routes.isNotEmpty) {
-      final route = directions.routes.first;
-
-      // Decode the polyline using the polyline string
-      List<LatLng> polylinePoints = _decodePoly(route.overviewPolyline.points);
-
-      if (mounted) {
-        setState(() {
-          _polylineCoordinates = polylinePoints;
-        });
+        if (mounted) {
+          setState(() {
+            _polylineCoordinates = polylinePoints;
+          });
+        }
+      } else {
+        print('Directions API error: ${directions.errorMessage}');
       }
-    } else {
-      print('Error fetching directions: ${directions.errorMessage}'); // For debugging only
+    } catch (e) {
+      print('Error fetching directions: $e');
     }
   }
+
 
   // Method to decode polyline string to LatLng points
   List<LatLng> _decodePoly(String poly) {
@@ -164,16 +179,15 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Directions to ${widget.destinationName}")),
-      body: GoogleMap(
+      body: _currentLocation == null
+          ? Center(child: CircularProgressIndicator()) // Show loading indicator
+          : GoogleMap(
         initialCameraPosition: CameraPosition(
-          target: _currentLocation ?? LatLng(0.0, 0.0), // (0, 0) as fallback
-          zoom: 14,
+          target: _currentLocation!,
+          zoom: 18,
         ),
         onMapCreated: (controller) {
           _controller = controller;
-          if (_currentLocation != null) {
-            _controller?.animateCamera(CameraUpdate.newLatLng(_currentLocation!));
-          }
         },
         myLocationEnabled: true,
         compassEnabled: true,

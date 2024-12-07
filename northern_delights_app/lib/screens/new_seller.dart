@@ -2,18 +2,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:northern_delights_app/screens/home_screen.dart';
+import 'package:northern_delights_app/screens/pin_location_screen.dart';
 import 'package:northern_delights_app/screens/signin_screen.dart';
 
-class SignupScreen extends StatefulWidget {
-  const SignupScreen({super.key, required this.isSeller});
+class NewSellerScreen extends StatefulWidget {
+  const NewSellerScreen({super.key, required this.isSeller});
 
   final bool isSeller;
 
   @override
-  State<SignupScreen> createState() => _SignupScreenState();
+  State<NewSellerScreen> createState() => _NewSellerScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen> {
+class _NewSellerScreenState extends State<NewSellerScreen> {
   final _auth = FirebaseAuth.instance;
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
@@ -176,37 +177,39 @@ class _SignupScreenState extends State<SignupScreen> {
                     _passwordMismatchWarning!,
                     style: TextStyle(color: Colors.red),
                   ),
-                if(widget.isSeller)
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.8,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        RadioListTile<String>(
-                          title: Text('Empanadaan', style: TextStyle(fontSize: 16),),
-                          value: 'gastropubs',
-                          groupValue: _selectedType,
-                          onChanged: (String? value) {
-                            setState(() {
-                              _selectedType = value!;
-                            });
-                          },
-                        ),
-                        RadioListTile<String>(
-                          title: Text('Sinanglao\'n', style: TextStyle(fontSize: 16),),
-                          value: 'restaurants',
-                          groupValue: _selectedType,
-                          onChanged: (String? value) {
-                            setState(() {
-                              _selectedType = value!;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
 
-                const SizedBox(height: 30),
+                const SizedBox(height: 15,),
+
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      RadioListTile<String>(
+                        title: Text('Empanadaan', style: TextStyle(fontSize: 16),),
+                        value: 'gastropubs',
+                        groupValue: _selectedType,
+                        onChanged: (String? value) {
+                          setState(() {
+                            _selectedType = value!;
+                          });
+                        },
+                      ),
+                      RadioListTile<String>(
+                        title: Text('Sinanglao\'n', style: TextStyle(fontSize: 16),),
+                        value: 'restaurants',
+                        groupValue: _selectedType,
+                        onChanged: (String? value) {
+                          setState(() {
+                            _selectedType = value!;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20,),
                 ElevatedButton(
                   onPressed: () async {
                     try{
@@ -223,57 +226,13 @@ class _SignupScreenState extends State<SignupScreen> {
                     } catch (e){
                       print(e);
                     }
-                    },
+                  },
                   style: ElevatedButton.styleFrom(
                     fixedSize: Size(300, 50),
                   ),
-                  child: Text('Signup'),
+                  child: Text('Add Seller'),
                 ),
-                const SizedBox(height: 20,),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('Already have an account?'),
-                    TextButton(
-                        onPressed: (){
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => SigninScreen(),
-                            ),
-                          );
-                        },
-                        child: Text('Sign in'),),
-                  ],
-                ),
-                const SizedBox(height: 5,),
-                if(!widget.isSeller) ...[
-                  // Row(
-                  //   mainAxisAlignment: MainAxisAlignment.center,
-                  //   children: [
-                  //     Text('Are you a seller?'),
-                  //     TextButton(
-                  //       onPressed: (){
-                  //         Navigator.push(context,
-                  //             MaterialPageRoute(builder: (context)=> SignupScreen(isSeller: true)));
-                  //       },
-                  //       child: Text('Signup as Seller'),),
-                  //   ],
-                  // ),
-                ] else ...[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('Signup as user?'),
-                      TextButton(
-                        onPressed: (){
-                          Navigator.push(context,
-                              MaterialPageRoute(builder: (context)=> SignupScreen(isSeller: false)));
-                        },
-                        child: Text('Signup as User'),),
-                    ],
-                  ),
-                ],
+                const SizedBox(height: 30),
               ],
             ),
           ),

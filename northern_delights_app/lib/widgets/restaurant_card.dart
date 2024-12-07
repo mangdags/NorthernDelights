@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:northern_delights_app/models/restaurant_doc_data.dart';
@@ -19,6 +20,41 @@ class RestaurantsCard extends StatefulWidget {
 class _RestaurantsCardState extends State<RestaurantsCard> {
   final RestaurantService restaurantService = RestaurantService();
 
+  late Timestamp openingTime;
+  late Timestamp closingTime;
+  late TimeOfDay openTimeOfDay;
+  late TimeOfDay closeTimeOfDay;
+  final now = TimeOfDay.now();
+
+  String convertToDateString(TimeOfDay? timeOfDay) {
+
+    if (timeOfDay == null) {
+      return '00:00';
+    }
+    final hours = timeOfDay.hourOfPeriod; // Gets the hour in 12-hour format
+    final minutes = timeOfDay.minute;
+    final period = timeOfDay.period == DayPeriod.am ? 'AM' : 'PM';
+
+    return '$hours:${minutes.toString().padLeft(2, '0')} $period';
+  }
+
+  TimeOfDay convertToTimeOfDay(Timestamp timestamp) {
+    final dateTime = timestamp.toDate();
+    return TimeOfDay(hour: dateTime.hour, minute: dateTime.minute);
+  }
+
+  bool isStoreClosed(TimeOfDay open, TimeOfDay close, TimeOfDay now) {
+    final currentMinutes = now.hour * 60 + now.minute;
+    final openMinutes = open.hour * 60 + open.minute;
+    final closeMinutes = close.hour * 60 + close.minute;
+
+    if (closeMinutes > openMinutes) {
+      return !(currentMinutes >= openMinutes && currentMinutes < closeMinutes);
+    } else {
+      return !(currentMinutes >= openMinutes || currentMinutes < closeMinutes);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -31,6 +67,12 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
             }
 
             var restoList = snapshot.data!.map((resto) {
+
+              openingTime = resto['open_time'];
+              closingTime = resto['close_time'];
+
+              openTimeOfDay = convertToTimeOfDay(openingTime);
+              closeTimeOfDay = convertToTimeOfDay(closingTime);
               return GestureDetector(
                 onTap: () {
                   Navigator.push(
@@ -82,6 +124,28 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
                             ),
                           ),
                         ),
+
+                        if (isStoreClosed(openTimeOfDay, closeTimeOfDay, now))...[
+
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.6),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  'Closed',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                         Positioned(
                           bottom: 10,
                           left: 5,
@@ -92,7 +156,7 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
                               child: Container(
                                 padding: EdgeInsets.all(10),
                                 width: 210,
-                                height: 90,
+                                height: 110,
                                 decoration: BoxDecoration(
                                   color: Colors.black.withOpacity(0.3),
                                   borderRadius: BorderRadius.circular(10),
@@ -114,12 +178,12 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
                                       children: [
                                         SvgPicture.asset(
                                           'assets/icons/location-pin.svg',
-                                          height: 20,
-                                          width: 20,
+                                          height: 15,
+                                          width: 15,
                                           colorFilter: ColorFilter.mode(
                                               Colors.white70, BlendMode.srcIn),
                                         ),
-                                        SizedBox(width: 5),
+                                        SizedBox(width: 8),
                                         Text(
                                           resto['location'],
                                           style: TextStyle(
@@ -142,6 +206,37 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
                                         SizedBox(width: 8),
                                         Text(
                                           resto['rating'].toString(),
+                                          style: TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 3),
+                                    Row(
+                                      children: [
+                                        Icon(Icons.access_time_outlined, color: Colors.white70,size: 16),
+
+                                        SizedBox(width: 8),
+                                        Text(
+                                          convertToDateString(openTimeOfDay),
+                                          style: TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          '-',
+                                          style: TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          convertToDateString(closeTimeOfDay),
                                           style: TextStyle(
                                             color: Colors.white70,
                                             fontSize: 12,

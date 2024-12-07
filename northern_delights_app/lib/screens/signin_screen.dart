@@ -110,18 +110,18 @@ class _SigninScreenState extends State<SigninScreen> {
                 ],
               ),
               const SizedBox(height: 5),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Are you a seller?'),
-                  TextButton(
-                    onPressed: (){
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (context)=> SignupScreen(isSeller: true)));
-                    },
-                    child: Text('Signup as Seller'),),
-                ],
-              ),
+              // Row(
+              //   mainAxisAlignment: MainAxisAlignment.center,
+              //   children: [
+              //     Text('Are you a seller?'),
+              //     TextButton(
+              //       onPressed: (){
+              //         Navigator.push(context,
+              //             MaterialPageRoute(builder: (context)=> SignupScreen(isSeller: true)));
+              //       },
+              //       child: Text('Signup as Seller'),),
+              //   ],
+              // ),
             ],
           ),
         ),

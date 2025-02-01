@@ -2,25 +2,21 @@ import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:northern_delights_app/models/restaurant_doc_data.dart';
-import 'package:northern_delights_app/screens/restaurant_info_screen.dart';
+import 'package:northern_delights_app/models/gastropub_doc_data.dart';
+import 'package:northern_delights_app/screens/gastropub_info_screen.dart';
 
-class RestaurantsCard extends StatefulWidget {
-  final String selectedCategory;
-  final String? searchKeyword; // New optional parameter for search keyword
-  final Map<String, dynamic>? restoData;
+class GastropubCardSearch extends StatefulWidget {
+  final String? searchKeyword;
   final bool isRegular;
 
-  const RestaurantsCard({super.key, required this.selectedCategory, this.searchKeyword,
-    this.restoData,
-    required this.isRegular});
+  const GastropubCardSearch({super.key, required this.searchKeyword, required this.isRegular});
 
   @override
-  _RestaurantsCardState createState() => _RestaurantsCardState();
+  _GastropubCardSearchState createState() => _GastropubCardSearchState();
 }
 
-class _RestaurantsCardState extends State<RestaurantsCard> {
-  final RestaurantService restaurantService = RestaurantService();
+class _GastropubCardSearchState extends State<GastropubCardSearch> {
+  final GastropubSearch gastropubSearch = GastropubSearch();
 
   late Timestamp openingTime;
   late Timestamp closingTime;
@@ -57,33 +53,35 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         StreamBuilder<List<Map<String, dynamic>>>(
-          stream: restaurantService.getStream(widget.selectedCategory, keyword: widget.searchKeyword),
+          // Update the stream based on the selected category
+          stream: gastropubSearch.getGastroSearchOr(keyword: widget.searchKeyword),
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
               return Center(child: CircularProgressIndicator());
             }
 
-
-            var restoList = snapshot.data!.map((resto) {
-
-              openingTime = resto['open_time'];
-              closingTime = resto['close_time'];
+            var gastropubList = snapshot.data!.map((gastropub) {
+              openingTime = gastropub['open_time'];
+              closingTime = gastropub['close_time'];
 
               openTimeOfDay = convertToTimeOfDay(openingTime);
               closeTimeOfDay = convertToTimeOfDay(closingTime);
+
               return GestureDetector(
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => RestaurantInfo(
+                      builder: (context) => GastropubInfo(
                         isRegular: widget.isRegular,
-                        restaurantID: resto['id'],
+                        gastropubID: gastropub['id'],
+
                       ),
                     ),
                   );
@@ -108,7 +106,7 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(20),
                             child: Image.network(
-                              resto['image_url'],
+                              gastropub['image_url'],
                               fit: BoxFit.cover,
                               width: 220,
                               height: 300,
@@ -149,6 +147,8 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
                             ),
                           ),
                         ],
+
+
                         Positioned(
                           bottom: 10,
                           left: 5,
@@ -168,7 +168,7 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      resto['name'],
+                                      gastropub['name'],
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
@@ -188,7 +188,7 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
                                         ),
                                         SizedBox(width: 8),
                                         Text(
-                                          resto['location'],
+                                          gastropub['location'],
                                           style: TextStyle(
                                             color: Colors.white70,
                                             fontSize: 12,
@@ -208,7 +208,7 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
                                         ),
                                         SizedBox(width: 8),
                                         Text(
-                                          resto['rating'].toString(),
+                                          gastropub['rating'].toString(),
                                           style: TextStyle(
                                             color: Colors.white70,
                                             fontSize: 12,
@@ -264,7 +264,7 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
               height: 320,
               child: ListView(
                 scrollDirection: Axis.horizontal,
-                children: restoList.map((item) => Padding(
+                children: gastropubList.map((item) => Padding(
                   padding: EdgeInsets.only(right: 25.0),
                   child: item,
                 )).toList(),

@@ -1,15 +1,18 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:northern_delights_app/models/update_average_rating.dart';
-import 'package:northern_delights_app/screens/home_screen.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../models/review.dart';
-import 'gastropub_info_screen.dart';
 
 class LeaveReviewScreen extends StatefulWidget {
   final String restaurantGastropubId;
   final String collectionType;
+
 
   const LeaveReviewScreen({Key? key, required this.restaurantGastropubId, required this.collectionType})
       : super(key: key);
@@ -21,6 +24,12 @@ class LeaveReviewScreen extends StatefulWidget {
 class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
   final TextEditingController _reviewController = TextEditingController();
   final firestore = FirebaseFirestore.instance;
+
+  File? _selectedImage;
+  String? _imageUrl;
+  bool isUploading = false;
+  final ImagePicker _imagePicker = ImagePicker();
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   double _rating = 1.0; //Default to 1
   bool _isSubmitting = false;
@@ -46,9 +55,12 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
 
     String userName = "${userDoc['first_name']} ${userDoc['last_name']}";
 
+    await _uploadImage();
+
     Review review = Review(
       userName: userName,
       reviewText: _reviewController.text,
+      reviewImage: _imageUrl,
       rating: _rating,
       dateTime: DateTime.now(),
     );
@@ -83,6 +95,52 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
       });
     }
   }
+  Future<void> _uploadImage() async {
+    if (_selectedImage == null || isUploading) return;
+
+    setState(() {
+      isUploading = true;
+    });
+
+    String userId = FirebaseAuth.instance.currentUser!.uid;
+
+    final fileName = '$userId-${widget.restaurantGastropubId}-review.png';
+    final storageRef = _storage.ref().child('${widget.collectionType}/reviews/${widget.restaurantGastropubId}/$fileName');
+
+    try {
+      final uploadTask = await storageRef.putFile(_selectedImage!);
+      final imageUrl = await uploadTask.ref.getDownloadURL();
+
+      setState(() {
+        _imageUrl = imageUrl;
+      });
+
+      // await firestore.collection(widget.collectionType).doc(userId).update({
+      //   'image_url': _imageUrl,
+      // });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Image uploaded!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Image upload failed: $e')),
+      );
+    } finally{
+      setState(() {
+        isUploading = false;
+      });
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final pickedFile = await _imagePicker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -103,6 +161,18 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
               ),
             ),
             const SizedBox(height: 16),
+            GestureDetector(
+              onTap: _pickImage,
+              child: CircleAvatar(
+                radius: 30,
+                backgroundImage: _selectedImage != null
+                    ? FileImage(_selectedImage!)
+                    : (_imageUrl != null ? NetworkImage(_imageUrl!) as ImageProvider : null),
+                child: _selectedImage == null && _imageUrl == null
+                    ? const Icon(Icons.camera_alt, size: 25)
+                    : null,
+              ),
+            ),
 
             Row(
               mainAxisAlignment: MainAxisAlignment.center,

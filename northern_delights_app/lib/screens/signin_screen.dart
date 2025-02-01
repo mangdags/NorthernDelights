@@ -30,7 +30,7 @@ class _SigninScreenState extends State<SigninScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Northern',
+                    'Vigan',
                     style: TextStyle(
                         color: Colors.blueAccent,
                         fontSize: 35,

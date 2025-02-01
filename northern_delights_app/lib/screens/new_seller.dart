@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:northern_delights_app/screens/home_screen.dart';
 import 'package:northern_delights_app/screens/pin_location_screen.dart';
+import 'package:northern_delights_app/screens/seller_management_screen.dart';
 import 'package:northern_delights_app/screens/signin_screen.dart';
 
 class NewSellerScreen extends StatefulWidget {
@@ -16,8 +17,8 @@ class NewSellerScreen extends StatefulWidget {
 
 class _NewSellerScreenState extends State<NewSellerScreen> {
   final _auth = FirebaseAuth.instance;
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  // final TextEditingController _passwordController = TextEditingController();
+  // final TextEditingController _confirmPasswordController = TextEditingController();
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -26,9 +27,9 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
   String? firstName;
   String? lastName;
   String? email;
-  String? password;
-  String? confirmPassword;
-  String? _passwordMismatchWarning;
+  // String? password;
+  // String? confirmPassword;
+  // String? _passwordMismatchWarning;
   String _selectedType = 'Empanadaan';
   String? shop_name;
 
@@ -46,7 +47,7 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Northern',
+                    'Vigan',
                     style: TextStyle(
                         color: Colors.blueAccent,
                         fontSize: 35,
@@ -99,24 +100,6 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  child: TextField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    textAlign: TextAlign.center,
-                    onChanged: (value){
-                      email = value;
-                    },
-                    decoration: InputDecoration(
-                      hintText: 'Email Address',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(10)),
-                      ),
-                    ),
-                  ),
-                ),
                 if (widget.isSeller) ...[
                   const SizedBox(height: 20),
                   SizedBox(
@@ -136,49 +119,70 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
                     ),
                   ),
                 ],
+
                 const SizedBox(height: 20),
-                SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  child: TextField(
-                    controller: _passwordController,
-                    textAlign: TextAlign.center,
-                    onChanged: (value){
-                      password = value;
-                    },
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      hintText: 'Password',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                if(!widget.isSeller) ...[
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.8,
+                    child: TextField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      textAlign: TextAlign.center,
+                      onChanged: (value){
+                        email = value;
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Email Address',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(10)),
+                        ),
                       ),
                     ),
                   ),
-                ),
+                  const SizedBox(height: 20),
+                // SizedBox(
+                //   width: MediaQuery.of(context).size.width * 0.8,
+                //   child: TextField(
+                //     controller: _passwordController,
+                //     textAlign: TextAlign.center,
+                //     onChanged: (value){
+                //       password = value;
+                //     },
+                //     obscureText: true,
+                //     decoration: InputDecoration(
+                //       hintText: 'Password',
+                //       border: OutlineInputBorder(
+                //         borderRadius: BorderRadius.all(Radius.circular(10)),
+                //       ),
+                //     ),
+                //   ),
+                // ),
                 const SizedBox(height: 20),
-                SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  child: TextField(
-                    controller: _confirmPasswordController,
-                    textAlign: TextAlign.center,
-                    onChanged: (_){
-                      _validatePasswords();
-                    },
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      hintText: 'Repeat Password',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(10)),
-                      ),
-                    ),
-                  ),
-                ),
-                if (_passwordMismatchWarning != null)
-                  Text(
-                    _passwordMismatchWarning!,
-                    style: TextStyle(color: Colors.red),
-                  ),
+                // SizedBox(
+                //   width: MediaQuery.of(context).size.width * 0.8,
+                //   child: TextField(
+                //     controller: _confirmPasswordController,
+                //     textAlign: TextAlign.center,
+                //     onChanged: (_){
+                //       _validatePasswords();
+                //     },
+                //     obscureText: true,
+                //     decoration: InputDecoration(
+                //       hintText: 'Repeat Password',
+                //       border: OutlineInputBorder(
+                //         borderRadius: BorderRadius.all(Radius.circular(10)),
+                //       ),
+                //     ),
+                //   ),
+                // ),
+                // if (_passwordMismatchWarning != null)
+                //   Text(
+                //     _passwordMismatchWarning!,
+                //     style: TextStyle(color: Colors.red),
+                //   ),
 
                 const SizedBox(height: 15,),
+                ],
 
                 SizedBox(
                   width: MediaQuery.of(context).size.width * 0.8,
@@ -213,16 +217,16 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
                 ElevatedButton(
                   onPressed: () async {
                     try{
-                      if (_passwordMismatchWarning == null) {
+                      //if (_passwordMismatchWarning == null) {
                         signUpWithEmailPassword(
                             isAdmin: false,
                             firstName: _firstNameController.text.trim(),
                             lastName: _lastNameController.text.trim(),
-                            email: _emailController.text.trim(),
-                            password: _passwordController.text.trim(),
+                            email: '${_shopNameController.text.trim().toLowerCase().replaceAll(' ', '')}@email.com',
+                            password: '123456',
                             isSeller: widget.isSeller,
                             shopName: _shopNameController.text.trim());
-                      }
+                      //}
                     } catch (e){
                       print(e);
                     }
@@ -242,15 +246,16 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
   }
 
   void _validatePasswords() {
-    if (_passwordController.text != _confirmPasswordController.text) {
-      setState(() {
-        _passwordMismatchWarning = "Passwords do not match";
-      });
-    } else {
-      setState(() {
-        _passwordMismatchWarning = null;
-      });
-    }
+    // if (_passwordController.text != _confirmPasswordController.text) {
+    //   setState(() {
+    //     _passwordMismatchWarning = "Passwords do not match";
+    //   });
+    // } else {
+    //   setState(() {
+    //     _passwordMismatchWarning = null;
+    //   });
+    // }
+
   }
 
   Future<void> signUpWithEmailPassword({
@@ -265,7 +270,7 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
     try {
       // Create the user with Firebase Auth
       UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(email: email, password: password);
+          .createUserWithEmailAndPassword(email: '${shopName.trim().toLowerCase().replaceAll(' ', '')}@email.com', password: '123456');
 
       // Get the user ID
       User? user = userCredential.user;
@@ -277,7 +282,7 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
           'isSeller': isSeller,
           'first_name': firstName,
           'last_name': lastName,
-          'email_address': email,
+          'email_address': '${shopName.trim().toLowerCase().replaceAll(' ', '')}@email.com',
           'shop_name' : shopName,
           'store_type' : _selectedType.isNotEmpty ? _selectedType : '',
           'createdAt': FieldValue.serverTimestamp(),
@@ -286,8 +291,8 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
         _createStoreAccount(
             firstName: firstName,
             lastName: lastName,
-            email: email,
-            password: password,
+            email: '${shopName.trim().toLowerCase().replaceAll(' ', '')}@email.com',
+            password: '123456',
             isAdmin: isAdmin,
             isSeller: isSeller,
             uid: user.uid,
@@ -319,7 +324,7 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
         'first_name': firstName,
         'last_name': lastName,
         'name': shopName,
-        'email_address': email,
+        'email_address': '${shopName.trim().toLowerCase().replaceAll(' ', '')}@email.com',
         'geopoint': GeoPoint(0.0, 0.0),
         'open_time': Timestamp.now(),
         'close_time': Timestamp.now(),
@@ -331,7 +336,7 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
         'image_url': '',
       });
 
-      Navigator.push(context, MaterialPageRoute(builder: (context)=> SigninScreen()));
+      Navigator.push(context, MaterialPageRoute(builder: (context)=> SellerManagementScreen()));
 
         } catch (e) {
       print("Error: $e");

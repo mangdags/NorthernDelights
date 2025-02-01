@@ -28,6 +28,7 @@ class _SignupScreenState extends State<SignupScreen> {
   String? password;
   String? confirmPassword;
   String? _passwordMismatchWarning;
+  String? _passwordRequirementWarning;
   String _selectedType = 'Empanadaan';
   String? shop_name;
 
@@ -45,7 +46,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Northern',
+                    'Vigan',
                     style: TextStyle(
                         color: Colors.blueAccent,
                         fontSize: 35,
@@ -211,14 +212,20 @@ class _SignupScreenState extends State<SignupScreen> {
                   onPressed: () async {
                     try{
                       if (_passwordMismatchWarning == null) {
-                        signUpWithEmailPassword(
-                            isAdmin: false,
-                            firstName: _firstNameController.text.trim(),
-                            lastName: _lastNameController.text.trim(),
-                            email: _emailController.text.trim(),
-                            password: _passwordController.text.trim(),
-                            isSeller: widget.isSeller,
-                            shopName: _shopNameController.text.trim());
+                        if(!isPasswordRequirementMet(_passwordController.text)) {
+                          setState(() {
+                            _passwordMismatchWarning = "Password must have at least 1 uppercase and 1 number";
+                          });
+                        } else {
+                          signUpWithEmailPassword(
+                              isAdmin: false,
+                              firstName: _firstNameController.text.trim(),
+                              lastName: _lastNameController.text.trim(),
+                              email: _emailController.text.trim(),
+                              password: _passwordController.text.trim(),
+                              isSeller: widget.isSeller,
+                              shopName: _shopNameController.text.trim());
+                        }
                       }
                     } catch (e){
                       print(e);
@@ -283,14 +290,27 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   void _validatePasswords() {
+
     if (_passwordController.text != _confirmPasswordController.text) {
       setState(() {
         _passwordMismatchWarning = "Passwords do not match";
       });
-    } else {
+    }
+    else {
       setState(() {
         _passwordMismatchWarning = null;
       });
+    }
+  }
+
+  bool isPasswordRequirementMet(String password){
+    // At least 1 uppercase letter and 1 number
+    RegExp regex = RegExp(r'^(?=.*[A-Z])(?=.*\d).{6,}$');
+    if(!regex.hasMatch(_passwordController.text)){
+      return false;
+    }
+    else {
+      return true;
     }
   }
 

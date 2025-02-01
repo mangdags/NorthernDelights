@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:northern_delights_app/models/gastropub_doc_data.dart';
+import 'package:northern_delights_app/models/restaurant_doc_data.dart';
 import 'package:northern_delights_app/screens/reviews_screen.dart';
 import 'package:northern_delights_app/screens/seller_management_screen.dart';
 import 'package:northern_delights_app/screens/signin_screen.dart';
@@ -10,8 +12,10 @@ import 'package:northern_delights_app/screens/user_profile_screen.dart';
 import 'package:northern_delights_app/widgets/gastropub_card.dart';
 import 'package:northern_delights_app/widgets/restaurant_card.dart';
 import 'package:northern_delights_app/widgets/category_button.dart';
+import 'package:northern_delights_app/widgets/restaurant_card_search.dart';
 
 import '../models/update_average_rating.dart';
+import '../widgets/gastropub_card_search.dart';
 import 'menu_management_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -33,10 +37,12 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isSeller = false;
   Map<String, dynamic>? userData;
   TextEditingController _searchController = TextEditingController();
-  List<DocumentSnapshot> _searchResults = [];
+  String _searchResult = '';
   late String _searchKeyword;
 
   String? userID;
+  RestaurantSearch restaurantSearch = RestaurantSearch();
+  GastropubSearch gastropubSearch = GastropubSearch();
 
   @override
   void initState() {
@@ -54,14 +60,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Filter the results based on the keyword
-    final filteredResults = _searchResults.where((doc) {
-      final name = doc['name']?.toLowerCase() ?? '';
-      final location = doc['location']?.toLowerCase() ?? '';
-      final keyword = _searchKeyword.toLowerCase();  // Hold search keyword
-
-      return name.contains(keyword) || location.contains(keyword);
-    }).toList();
 
     return SafeArea(
       child: Scaffold(
@@ -74,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Northern',
+                'Vigan',
                 style: TextStyle(
                   color: const Color.fromARGB(255, 255, 255, 255),
                   fontSize: 35,
@@ -136,35 +134,32 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ),
-          _searchResults.isEmpty
-              ? Text('')
-              : Column(
+          _searchResult.isEmpty ? Text('') : Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (_searchResults.any((doc) => doc.reference.parent.id == 'gastropubs')) ...[
-                Text(
-                  'Empanadaan',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                ),
-                for (var doc in _searchResults.where((doc) => doc.reference.parent.id == 'gastropubs'))
-                  //GastropubCards(data: doc.data() as Map<String, dynamic>, selectedCategory: ''),
-                const SizedBox(height: 20),
-              ],
-    if (_searchResults.any((doc) => doc.reference.parent.id == 'restaurants')) ...[
-      Text(
-        'Sinanglao\'n',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-          ),
-                    // Show the filtered results
-          if (filteredResults.isNotEmpty) ...[
-          for (var doc in filteredResults.where((doc) => doc.reference.parent.id == 'restaurants'))
-          //RestaurantsCard(data: doc.data() as Map<String, dynamic>, selectedCategory: ''),
-          //] else ...[
-        Center(child: Text('No sinanglao\'n found for this keyword')),
-      ],
-    ]
+              FutureBuilder<bool>(
+                future: hasRestoResult(_searchKeyword),
+                builder: (context, snapshot) {
+                  return Offstage(
+                    offstage: !(snapshot.hasData && snapshot.data!),
+                    child: RestaurantsCardSearch(
+                      searchKeyword: _searchKeyword,
+                      isRegular: true,
+                    ),
+                  );
+                },
+              ),
 
-    ],
+              FutureBuilder<bool>(
+                future: hasGastroResult(_searchKeyword),
+                builder: (context, snapshot) {
+                  return Offstage(
+                    offstage: !(snapshot.hasData && snapshot.data!),
+                    child: GastropubCardSearch(searchKeyword: _searchKeyword, isRegular: true),
+                  );
+                },
+              )
+              ],
           )
 
           ]
@@ -312,29 +307,30 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _searchMenu(String keyword) async {
     if (keyword.isEmpty) {
       setState(() {
-        _searchResults.clear();
+        _searchResult = '';
       });
 
       return;
     } else {
       _searchKeyword = keyword;
+      print('Keyword: $_searchKeyword');
     }
 
-    // Query both gastropubs and restaurants collections
-    QuerySnapshot gastropubsSnapshot = await FirebaseFirestore.instance
-        .collection('gastropubs')
-        .where('name', isGreaterThanOrEqualTo: keyword)
-        .where('name', isLessThanOrEqualTo: '${keyword}\uf8ff')
-        .get();
-
-    QuerySnapshot restaurantsSnapshot = await FirebaseFirestore.instance
-        .collection('restaurants')
-        .where('name', isGreaterThanOrEqualTo: keyword)
-        .where('name', isLessThanOrEqualTo: '${keyword}\uf8ff')
-        .get();
-
+    // // Query both gastropubs and restaurants collections
+    // QuerySnapshot gastropubsSnapshot = await FirebaseFirestore.instance
+    //     .collection('gastropubs')
+    //     .where('name', isGreaterThanOrEqualTo: keyword)
+    //     .where('name', isLessThanOrEqualTo: '${keyword}\uf8ff')
+    //     .get();
+    //
+    // QuerySnapshot restaurantsSnapshot = await FirebaseFirestore.instance
+    //     .collection('restaurants')
+    //     .where('name', isGreaterThanOrEqualTo: keyword)
+    //     .where('name', isLessThanOrEqualTo: '${keyword}\uf8ff')
+    //     .get();
+    //
     setState(() {
-      _searchResults = [...gastropubsSnapshot.docs, ...restaurantsSnapshot.docs];
+      _searchResult = keyword;
     });
   }
 
@@ -486,8 +482,34 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> signOut() async {
-    await FirebaseAuth.instance.signOut();
-    Navigator.push(
-        context, MaterialPageRoute(builder: (context) => SigninScreen()));
+    bool confirmLogout = await showConfirmationDialog(context, "Logout", "Are you sure you want to logout?");
+
+    if(confirmLogout) {
+      await FirebaseAuth.instance.signOut();
+      Navigator.push(
+          context, MaterialPageRoute(builder: (context) => SigninScreen()));
+    }
+  }
+
+  Future<bool> showConfirmationDialog(BuildContext context, String title, String content) async {
+    return await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(content),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false), // Cancel
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true), // Confirm
+              child: Text('Yes'),
+            ),
+          ],
+        );
+      },
+    ) ?? false; // Return false if dialog is dismissed
   }
 }

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:northern_delights_app/screens/home_screen.dart';
@@ -23,9 +24,13 @@ class MyApp extends StatelessWidget {
   // Root
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    User? getCurrentUser() {
+      return FirebaseAuth.instance.currentUser;
+    }
+
+      return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Northern Delights',
+      title: 'Vigan Delights',
       theme: ThemeData(
         fontFamily: 'Roboto',
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
@@ -34,9 +39,10 @@ class MyApp extends StatelessWidget {
       ),
       home: HomeScreen(),
 
-      initialRoute: 'signin_screen',
+      initialRoute: getCurrentUser() != null ? 'home_screen' : 'signin_screen',
        routes: {
          'signin_screen': (context) => SigninScreen(),
+         'home_screen': (context) => HomeScreen(),
        }
     );
   }

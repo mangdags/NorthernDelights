@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:northern_delights_app/screens/menu_management_screen.dart';
 import 'package:northern_delights_app/screens/new_seller.dart';
 import 'package:northern_delights_app/screens/signup_screen.dart';
 import 'package:northern_delights_app/screens/user_profile_screen.dart';
@@ -40,7 +41,34 @@ class _SellerManagementScreenState extends State<SellerManagementScreen> {
   }
 
   Future<void> _deleteSeller(String sellerId) async {
-    await _firestore.collection('users').doc(sellerId).delete();
+    bool confirmDeleteSeller = await showConfirmationDialog(context, "Delete Seller", "Are you sure you want to delete the seller?");
+    if(confirmDeleteSeller) {
+      await _firestore.collection('users').doc(sellerId).delete();
+      await _firestore.collection('restaurants').doc(sellerId).delete();
+      await _firestore.collection('gastropubs').doc(sellerId).delete();
+    }
+  }
+
+  Future<bool> showConfirmationDialog(BuildContext context, String title, String content) async {
+    return await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(content),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false), // Cancel
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true), // Confirm
+              child: Text('Yes'),
+            ),
+          ],
+        );
+      },
+    ) ?? false; // Return false if dialog is dismissed
   }
 
   void _showEditSellerDialog(String sellerId, String firstName, String lastName, String shopName, String emailAddress) {
@@ -138,6 +166,13 @@ class _SellerManagementScreenState extends State<SellerManagementScreen> {
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    IconButton(
+                      icon: const Icon(Icons.menu),
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => MenuManagementScreen(userId: sellerId),));
+
+                      },
+                    ),
                     IconButton(
                       icon: const Icon(Icons.edit),
                       onPressed: () {

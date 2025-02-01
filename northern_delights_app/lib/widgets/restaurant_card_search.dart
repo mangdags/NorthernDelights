@@ -5,22 +5,20 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:northern_delights_app/models/restaurant_doc_data.dart';
 import 'package:northern_delights_app/screens/restaurant_info_screen.dart';
 
-class RestaurantsCard extends StatefulWidget {
-  final String selectedCategory;
-  final String? searchKeyword; // New optional parameter for search keyword
-  final Map<String, dynamic>? restoData;
+class RestaurantsCardSearch extends StatefulWidget {
+  final String? searchKeyword;
   final bool isRegular;
 
-  const RestaurantsCard({super.key, required this.selectedCategory, this.searchKeyword,
-    this.restoData,
+  const RestaurantsCardSearch({super.key, //required this.selectedCategory,
+    this.searchKeyword,
     required this.isRegular});
 
   @override
-  _RestaurantsCardState createState() => _RestaurantsCardState();
+  _RestaurantsCardSearchState createState() => _RestaurantsCardSearchState();
 }
 
-class _RestaurantsCardState extends State<RestaurantsCard> {
-  final RestaurantService restaurantService = RestaurantService();
+class _RestaurantsCardSearchState extends State<RestaurantsCardSearch> {
+  final RestaurantSearch restaurantSearch = RestaurantSearch();
 
   late Timestamp openingTime;
   late Timestamp closingTime;
@@ -62,12 +60,12 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
     return Column(
       children: [
         StreamBuilder<List<Map<String, dynamic>>>(
-          stream: restaurantService.getStream(widget.selectedCategory, keyword: widget.searchKeyword),
+          stream: restaurantSearch.getRestaurantSearchOr(keyword: widget.searchKeyword),
           builder: (context, snapshot) {
+
             if (!snapshot.hasData) {
               return Center(child: CircularProgressIndicator());
             }
-
 
             var restoList = snapshot.data!.map((resto) {
 

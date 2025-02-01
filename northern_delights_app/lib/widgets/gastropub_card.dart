@@ -73,6 +73,15 @@ class _GastropubCardsState extends State<GastropubCards> {
                             openTimeOfDay = convertToTimeOfDay(openingTime);
                             closeTimeOfDay = convertToTimeOfDay(closingTime);
 
+
+
+
+                            // Future.forEach(snapshot.data!, (gastro) async {
+                            //     var menuKeywords = await fetchMenuKeywordsGastro(gastro['id']);
+                            //     await updateKeywordsGastro(gastro['id'], gastro['name'], menuKeywords);
+                            //     print('GENERATED KEYWORDS for ${gastro['id']}');
+                            // });
+
                             return GestureDetector(
                                 onTap: () {
                                     Navigator.push(

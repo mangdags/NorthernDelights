@@ -83,44 +83,79 @@ class _ReviewsDetailsState extends State<ReviewsDetails> {
                         ],
                       ),
                       child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Column(
                             mainAxisAlignment: MainAxisAlignment.start,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Icon(Icons.star, color: Colors.yellow.shade800, size: 20),
-                                  const SizedBox(width: 5),
-                                  Text(
-                                    reviews['star'].toString(),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 14,
-                                      color: Colors.black,
-                                    ),
+                                  Image.network(
+                                    reviews['reviewimage'] ?? 'assets/images/placeholder.png',
+                                    fit: BoxFit.contain,
+                                    alignment: Alignment.center,
+                                    width: 150,
+                                    height: 150,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        alignment: Alignment.center,
+                                        child: const Icon(
+                                          Icons.error,
+                                          size: 50,
+                                          color: Colors.red,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  const SizedBox(width: 15,),
+                                  Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.start,
+                                        children: [
+                                          Icon(Icons.star, color: Colors.yellow.shade800, size: 20),
+                                          const SizedBox(width: 5),
+                                          Text(
+                                            reviews['star'].toString(),
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 14,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+
+                                      const SizedBox(height: 5),
+                                      Container(
+                                        constraints: BoxConstraints(
+                                          maxWidth: MediaQuery.of(context).size.width * 0.78,
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 3.0, vertical: 0.0),
+                                          child: Text(
+                                            reviews['feedback'] ?? 'No feedback',
+                                            overflow: TextOverflow.visible,
+                                            maxLines: reviews['feedback'].toString().length,
+                                            softWrap: true,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.normal,
+                                              fontSize: 14,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
-                              ),
-                              const SizedBox(height: 5),
-                              Container(
-                                constraints: BoxConstraints(
-                                    maxWidth: MediaQuery.of(context).size.width * 0.78,
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 3.0, vertical: 2.0),
-                                  child: Text(
-                                    reviews['feedback'] ?? 'No feedback',
-                                    overflow: TextOverflow.visible,
-                                    maxLines: reviews['feedback'].toString().length,
-                                    softWrap: true,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.normal,
-                                      fontSize: 14,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                ),
                               ),
                               const SizedBox(height: 10),
                               Row(

@@ -196,12 +196,16 @@ class _GastropubCardsState extends State<GastropubCards> {
                                                                                         Colors.white70, BlendMode.srcIn),
                                                                                 ),
                                                                                 SizedBox(width: 8),
-                                                                                Text(
-                                                                                    gastropub['location'],
-                                                                                    style: TextStyle(
-                                                                                        color: Colors.white70,
-                                                                                        fontSize: 12,
-                                                                                    ),
+                                                                                Expanded(
+                                                                                  child: Text(
+                                                                                      overflow: TextOverflow.fade,
+                                                                                      maxLines: 1,
+                                                                                      gastropub['location'],
+                                                                                      style: TextStyle(
+                                                                                          color: Colors.white70,
+                                                                                          fontSize: 12,
+                                                                                      ),
+                                                                                  ),
                                                                                 ),
                                                                             ],
                                                                         ),

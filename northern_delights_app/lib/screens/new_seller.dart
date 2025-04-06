@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:northern_delights_app/models/gastropub_doc_data.dart';
+import 'package:northern_delights_app/models/restaurant_doc_data.dart';
 import 'package:northern_delights_app/screens/home_screen.dart';
 import 'package:northern_delights_app/screens/pin_location_screen.dart';
 import 'package:northern_delights_app/screens/seller_management_screen.dart';
@@ -227,6 +229,7 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
                             isSeller: widget.isSeller,
                             shopName: _shopNameController.text.trim());
                       //}
+
                     } catch (e){
                       print(e);
                     }
@@ -301,6 +304,11 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
 
         Navigator.push(context, MaterialPageRoute(builder: (context)=> SigninScreen()));
         await user.updateDisplayName('$firstName $lastName');
+
+
+        // Add keywords for searching
+        _selectedType == 'restaurants' ? updateKeywordsResto(user.uid, _shopNameController.text.trim(), await fetchMenuKeywordsResto(user.uid))
+            : updateKeywordsGastro(user.uid, _shopNameController.text.trim(), await fetchMenuKeywordsGastro(user.uid));
       }
     } catch (e) {
       print("Error: $e");

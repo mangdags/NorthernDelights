@@ -15,6 +15,8 @@ class _SigninScreenState extends State<SigninScreen> {
   final _auth = FirebaseAuth.instance;
   late String email;
   late String password;
+  late bool isEmailVerified = true;
+  late bool isCredentialsCorrect = true;
 
 
   @override
@@ -86,9 +88,26 @@ class _SigninScreenState extends State<SigninScreen> {
               const SizedBox(height: 30),
               ElevatedButton(
                 onPressed: () async {
-                  final userLoggedIn = await _auth.signInWithEmailAndPassword(email: email, password: password);
-                  if(userLoggedIn != null){
-                    Navigator.push(context, MaterialPageRoute(builder: (context)=> HomeScreen()));
+                  try
+                  {
+                    final userLoggedIn = await _auth.signInWithEmailAndPassword(email: email, password: password);
+                    final result = userLoggedIn.user;
+                    //isEmailVerified = result!.emailVerified;
+
+                    if(userLoggedIn != null){
+                      Navigator.push(context, MaterialPageRoute(builder: (context)=> HomeScreen()));
+                    }
+
+                    setState(() {
+                      isEmailVerified = result!.emailVerified;
+                    });
+                  } catch (e)
+                  {
+                    isCredentialsCorrect = false;
+
+                    setState(() {
+                      isCredentialsCorrect;
+                    });
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -97,6 +116,14 @@ class _SigninScreenState extends State<SigninScreen> {
                 child: Text('Sign In'),
               ),
               const SizedBox(height: 20,),
+              Visibility(
+                  visible: !isEmailVerified,
+                  child: Text('Please verify your email first!'),
+              ),
+              Visibility(
+                visible: !isCredentialsCorrect,
+                child: Text('Invalid credentials, please try again!'),
+              ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

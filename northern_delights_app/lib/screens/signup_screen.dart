@@ -357,6 +357,9 @@ class _SignupScreenState extends State<SignupScreen> {
 
         Navigator.push(context, MaterialPageRoute(builder: (context)=> SigninScreen()));
         await user.updateDisplayName('$firstName $lastName');
+        //TODO: Toast or alert user to verify email
+
+        await user.sendEmailVerification();
       }
     } catch (e) {
       print("Error: $e");

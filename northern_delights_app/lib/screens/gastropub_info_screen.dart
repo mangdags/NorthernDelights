@@ -383,154 +383,160 @@ class FoodPlaceInfoWidget extends StatelessWidget {
         // Call the callback to update the parent widget's state
         onLocationUpdated(lat, long);
 
-        return Container(
-          margin: EdgeInsets.only(top: 30, left: 20, right: 20),
-          child: Stack(
-            alignment: Alignment.bottomCenter,
-            children: [
-              // Image container
-              Container(
-                width: screenWidth! - 40,
-                height: 450,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.all(Radius.circular(20)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      offset: const Offset(0.0, 4),
-                      blurRadius: 8,
-                      spreadRadius: 1,
+        return SafeArea(
+          child: Container(
+            margin: EdgeInsets.only(top: 30, left: 20, right: 20),
+            child: Stack(
+              alignment: Alignment.bottomCenter,
+              children: [
+                // Image container
+                Container(
+                  width: screenWidth! - 40,
+                  height: 500,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.all(Radius.circular(20)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        offset: const Offset(0.0, 4),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Image.network(
+                      gastro['image_url'],
+                      fit: BoxFit.cover,
+                      width: 220,
+                      height: 350,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          alignment: Alignment.center,
+                          child: const Icon(
+                            Icons.error, // Fallback if the image can't load
+                            size: 220,
+                            color: Colors.red,
+                          ),
+                        );
+                      },
                     ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Image.network(
-                    gastro['image_url'],
-                    fit: BoxFit.cover,
-                    width: 220,
-                    height: 300,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        alignment: Alignment.center,
-                        child: const Icon(
-                          Icons.error, // Fallback if the image can't load
-                          size: 220,
-                          color: Colors.red,
-                        ),
-                      );
-                    },
                   ),
                 ),
-              ),
-
-              Positioned(
-                bottom: 15,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                    child: Container(
-                      width: 330,
-                      height: 147,
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.4),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(15),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              gastro['name'],
-                              style: const TextStyle(
-                                fontSize: 23,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+          
+                Positioned(
+                  bottom: 15,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                      child: Container(
+                        width: 330,
+                        height: 180,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.4),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(15),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                gastro['name'],
+                                style: const TextStyle(
+                                  fontSize: 23,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 5),
-                            Row(
-                              children: [
-                                SvgPicture.asset(
-                                  'assets/icons/location-pin.svg',
-                                  height: 20,
-                                  width: 20,
-                                  colorFilter: ColorFilter.mode(
-                                      Colors.white70, BlendMode.srcIn),
-                                ),
-                                SizedBox(width: 5),
-                                Text(
-                                  gastro['location'],
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 16,
+                              const SizedBox(height: 5),
+                              Row(
+                                children: [
+                                  SvgPicture.asset(
+                                    'assets/icons/location-pin.svg',
+                                    height: 20,
+                                    width: 20,
+                                    colorFilter: ColorFilter.mode(
+                                        Colors.white70, BlendMode.srcIn),
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 5),
-                            Row(
-                              children: [
-                                const SizedBox(width: 2),
-                                SvgPicture.asset(
-                                  'assets/icons/star.svg',
-                                  height: 15,
-                                  width: 15,
-                                  colorFilter: ColorFilter.mode(
-                                      Colors.white70, BlendMode.srcIn),
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  gastro['rating'].toString(),
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 16,
+                                  SizedBox(width: 5),
+                                  Expanded(
+                                    child: Text(
+                                      overflow: TextOverflow.fade,
+                                      maxLines: 2,
+                                      gastro['location'],
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 16,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 5),
-                            Row(
-                              children: [
-                                Icon(Icons.access_time_outlined, color: Colors.white70,size: 16),
-
-                                SizedBox(width: 8),
-                                Text(
-                                  convertToDateString(openTimeOfDay),
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 16,
+                                ],
+                              ),
+                              const SizedBox(height: 5),
+                              Row(
+                                children: [
+                                  const SizedBox(width: 2),
+                                  SvgPicture.asset(
+                                    'assets/icons/star.svg',
+                                    height: 15,
+                                    width: 15,
+                                    colorFilter: ColorFilter.mode(
+                                        Colors.white70, BlendMode.srcIn),
                                   ),
-                                ),
-                                SizedBox(width: 4),
-                                Text(
-                                  '-',
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 16,
+                                  SizedBox(width: 8),
+                                  Text(
+                                    gastro['rating'].toString(),
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 16,
+                                    ),
                                   ),
-                                ),
-                                SizedBox(width: 4),
-                                Text(
-                                  convertToDateString(closeTimeOfDay),
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 16,
+                                ],
+                              ),
+                              const SizedBox(height: 5),
+                              Row(
+                                children: [
+                                  Icon(Icons.access_time_outlined, color: Colors.white70,size: 16),
+          
+                                  SizedBox(width: 8),
+                                  Text(
+                                    convertToDateString(openTimeOfDay),
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 16,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                  SizedBox(width: 4),
+                                  Text(
+                                    '-',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    convertToDateString(closeTimeOfDay),
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },

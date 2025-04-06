@@ -86,13 +86,13 @@ class RestaurantSearch {
     //     .collection('restaurants')
     //     .where('name', isEqualTo: keyword);
 
-    keywordsQuery.get().then((querySnapshot) {
-      for (var doc in querySnapshot.docs) {
-        print('Found $keywordLower: ${doc.data()}');
-      }
-    }).catchError((error) {
-      print('Error: $error');
-    });
+    // keywordsQuery.get().then((querySnapshot) {
+    //   for (var doc in querySnapshot.docs) {
+    //     print('Found $keywordLower: ${doc.data()}');
+    //   }
+    // }).catchError((error) {
+    //   print('Error: $error');
+    // });
 
     // Fetch both query snapshots asynchronous
     var keyWordsResults = await keywordsQuery.get();

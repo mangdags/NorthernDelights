@@ -5,6 +5,9 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../models/gastropub_doc_data.dart';
+import '../models/restaurant_doc_data.dart';
+
 class MenuManagementScreen extends StatefulWidget {
   final String userId;
 
@@ -121,6 +124,9 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
 
       // Refresh menu items
       _fetchMenuData();
+
+      collectionType == 'restaurants' ? updateKeywordsResto(widget.userId, _storeName!, await fetchMenuKeywordsResto(widget.userId))
+          : updateKeywordsGastro(widget.userId, _storeName!, await fetchMenuKeywordsGastro(widget.userId));
     }
   }
 

@@ -116,7 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         controller: _searchController,
                         onChanged: _searchMenu,
                         decoration: InputDecoration(
-                          hintText: 'Search by name or location',
+                          hintText: 'Search by name or menu',
                           prefixIcon: Opacity(
                             opacity: 0.5,
                             child: Padding(
@@ -313,7 +313,6 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     } else {
       _searchKeyword = keyword;
-      print('Keyword: $_searchKeyword');
     }
 
     // // Query both gastropubs and restaurants collections

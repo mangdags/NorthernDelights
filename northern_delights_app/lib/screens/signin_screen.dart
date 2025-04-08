@@ -92,15 +92,16 @@ class _SigninScreenState extends State<SigninScreen> {
                   {
                     final userLoggedIn = await _auth.signInWithEmailAndPassword(email: email, password: password);
                     final result = userLoggedIn.user;
-                    //isEmailVerified = result!.emailVerified;
-
-                    if(userLoggedIn != null){
-                      Navigator.push(context, MaterialPageRoute(builder: (context)=> HomeScreen()));
-                    }
 
                     setState(() {
                       isEmailVerified = result!.emailVerified;
                     });
+
+                    //TODO: Check if the user is verified
+
+                    //if(userLoggedIn != null && isEmailVerified){
+                      Navigator.push(context, MaterialPageRoute(builder: (context)=> HomeScreen()));
+                    //}
                   } catch (e)
                   {
                     isCredentialsCorrect = false;
@@ -118,11 +119,42 @@ class _SigninScreenState extends State<SigninScreen> {
               const SizedBox(height: 20,),
               Visibility(
                   visible: !isEmailVerified,
-                  child: Text('Please verify your email first!'),
+                  child: Text('Please verify your email first!',
+                    style: TextStyle(
+                      color: Colors.red,
+                    ),
+                  ),
               ),
               Visibility(
                 visible: !isCredentialsCorrect,
-                child: Text('Invalid credentials, please try again!'),
+                child: Text('Invalid credentials, please try again!',
+                  style: TextStyle(
+                    color: Colors.red,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  _auth.sendPasswordResetEmail(email: email);
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text('Password Reset'),
+                        content: Text('A password reset link has been sent to your email.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: Text('OK'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+                child: Text('Forgot Password'),
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

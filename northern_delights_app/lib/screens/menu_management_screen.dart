@@ -27,7 +27,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   String? _storeName;
 
   File? _selectedImage;
-  String? _imageUrl;
+  String? _imageURL;
   bool isUploading = false;
 
   final ImagePicker _imagePicker = ImagePicker();
@@ -43,18 +43,21 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     final gastropubData = await _getCollectionData('gastropubs');
     final restaurantData = await _getCollectionData('restaurants');
 
-    if (gastropubData != null) {
+    if(gastropubData != null && restaurantData != null) {
+      setState(() {
+        collectionType = 'both';
+        menuItems = [...gastropubData, ...restaurantData];
+      });
+    } else if (restaurantData == null && gastropubData != null) {
       setState(() {
         collectionType = 'gastropubs';
         menuItems = gastropubData;
       });
-    } else {
-      if (restaurantData != null) {
-        setState(() {
-          collectionType = 'restaurants';
-          menuItems = restaurantData;
-        });
-      }
+    } else if (restaurantData != null && gastropubData == null) {
+      setState(() {
+        collectionType = 'restaurants';
+        menuItems = restaurantData;
+      });
     }
   }
 
@@ -103,47 +106,139 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
 
 
   Future<void> _addMenuItem(String name, double price) async {
+
     if (collectionType == null) return;
+    if (_selectedImage != null) {
+      final fileSize = await _selectedImage?.length();
+      if(fileSize! > 3000000) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Image size exceeds 3MB')),
+        );
+        return;
+      }
+      if(collectionType == 'gastropubs')
+      {
+        await _addMenuOnCollection(FirebaseFirestore.instance.collection('gastropubs'), name, price);
 
-    final collectionRef = FirebaseFirestore.instance.collection(collectionType!);
-    final docRef = await collectionRef.doc(widget.userId);
-    final docSnapshot = await docRef.get();
+      } else if(collectionType == 'restaurants') {
 
-    if (docSnapshot.exists) {
-      final docId = docSnapshot.id;
-      final menuCollectionRef = collectionRef.doc(docId).collection('menu');
+        await _addMenuOnCollection(FirebaseFirestore.instance.collection('restaurants'), name, price);
 
-      // Add item and get its document reference
-      final newMenuItemRef = await menuCollectionRef.add({'name': name, 'price': price});
-      final menuItemId = newMenuItemRef.id;
-
-      // Upload image and update the item with its URL if an image is selected
-      if (_selectedImage != null) {
-        await _uploadImage(menuItemId);
+      } else {
+        await _addMenuOnCollection(FirebaseFirestore.instance.collection('gastropubs'), name, price);
+        await _addMenuOnCollection(FirebaseFirestore.instance.collection('restaurants'), name, price);
       }
 
-      // Refresh menu items
-      _fetchMenuData();
+    }
+  }
 
-      collectionType == 'restaurants' ? updateKeywordsResto(widget.userId, _storeName!, await fetchMenuKeywordsResto(widget.userId))
-          : updateKeywordsGastro(widget.userId, _storeName!, await fetchMenuKeywordsGastro(widget.userId));
+  Future<void> _addMenuOnCollection(CollectionReference<Map<String, dynamic>> collectionRef, String name, double price) async
+  {
+    if(collectionType == 'both')
+    {
+      //resto
+      final restoCollectionRef = FirebaseFirestore.instance.collection('restaurants');
+      final restoDocRef = await restoCollectionRef.doc(widget.userId);
+      final restoDocSnapshot = await restoDocRef.get();
+
+      if (restoDocSnapshot.exists) {
+        final restoDocId = restoDocSnapshot.id;
+        final restoMenuCollectionRef = restoCollectionRef.doc(restoDocId).collection('menu');
+
+        // Add item and get its document reference
+        final restoNewMenuItemRef = await restoMenuCollectionRef.add({'name': name, 'price': price, 'photo': ''});
+        final restoMenuItemId = restoNewMenuItemRef.id;
+
+        await _uploadImage(restoMenuItemId);
+      }
+
+        //gastro
+        final gastroCollectionRef = FirebaseFirestore.instance.collection('gastropubs');
+        final gastroDocRef = await gastroCollectionRef.doc(widget.userId);
+        final gastroDocSnapshot = await gastroDocRef.get();
+
+        if (gastroDocSnapshot.exists) {
+          final gastroDocId = gastroDocSnapshot.id;
+          final gastroMenuCollectionRef = gastroCollectionRef.doc(gastroDocId).collection('menu');
+
+          // Add item and get its document reference
+          final gastroNewMenuItemRef = await gastroMenuCollectionRef.add({'name': name, 'price': price, 'photo': ''});
+          final gastroMenuItemId = gastroNewMenuItemRef.id;
+
+          await _uploadImage(gastroMenuItemId);
+        }
+    } else {
+      final docRef = await collectionRef.doc(widget.userId);
+      final docSnapshot = await docRef.get();
+
+      if (docSnapshot.exists) {
+        final docId = docSnapshot.id;
+        final menuCollectionRef = collectionRef.doc(docId).collection('menu');
+
+        // Add item and get its document reference
+        final newMenuItemRef = await menuCollectionRef.add({'name': name, 'price': price, 'photo': ''});
+        final menuItemId = newMenuItemRef.id;
+
+        await _uploadImage(menuItemId);
+      }
+    }
+
+
+    // Refresh menu items
+    _fetchMenuData();
+
+    // Add keywords for searching
+    if(collectionType == 'restaurants') {
+      updateKeywordsResto(widget.userId, _storeName!, await fetchMenuKeywordsResto(widget.userId));
+    } else if(collectionType == 'gastropubs') {
+      updateKeywordsGastro(widget.userId, _storeName!, await fetchMenuKeywordsGastro(widget.userId));
+    } else {
+      updateKeywordsResto(widget.userId, _storeName!, await fetchMenuKeywordsResto(widget.userId));
+      updateKeywordsGastro(widget.userId, _storeName!, await fetchMenuKeywordsGastro(widget.userId));
     }
   }
 
 
   Future<void> _updateMenuItem(String itemId, String name, double price) async {
-    if (collectionType == null) return;
 
-    final collectionRef = FirebaseFirestore.instance.collection(collectionType!);
-    final docRef = await collectionRef.doc(widget.userId);
-    final docSnapshot = await docRef.get();
+    if(collectionType == 'both') {
+      //gastro
+      final gastroCollectionRef = FirebaseFirestore.instance.collection('gastropubs');
+      final gastroDocRef = await gastroCollectionRef.doc(widget.userId);
+      final gastroDocSnapshot = await gastroDocRef.get();
 
-    if (docSnapshot.exists) {
-      final docId = docSnapshot.id;
-      final menuItemRef = collectionRef.doc(docId).collection('menu').doc(itemId);
-      await menuItemRef.update({'name': name, 'price': price});
+      if (gastroDocSnapshot.exists) {
+        final docId = gastroDocSnapshot.id;
+        final menuItemRef = gastroCollectionRef.doc(docId).collection('menu').doc(itemId);
+        await menuItemRef.update({'name': name, 'price': price});
 
-      _fetchMenuData();
+        _fetchMenuData();
+      }
+
+      //resto
+      final restoCollectionRef = FirebaseFirestore.instance.collection('restaurants');
+      final restoDocRef = await restoCollectionRef.doc(widget.userId);
+      final restoDocSnapShot = await restoDocRef.get();
+
+      if (restoDocSnapShot.exists) {
+        final docId = restoDocSnapShot.id;
+        final menuItemRef = restoCollectionRef.doc(docId).collection('menu').doc(itemId);
+        await menuItemRef.update({'name': name, 'price': price});
+
+        _fetchMenuData();
+      }
+    } else {
+      final collectionRef = FirebaseFirestore.instance.collection(collectionType!);
+      final docRef = await collectionRef.doc(widget.userId);
+      final docSnapshot = await docRef.get();
+
+      if (docSnapshot.exists) {
+        final docId = docSnapshot.id;
+        final menuItemRef = collectionRef.doc(docId).collection('menu').doc(itemId);
+        await menuItemRef.update({'name': name, 'price': price});
+
+        _fetchMenuData();
+      }
     }
   }
 
@@ -154,12 +249,32 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     final docRef = await collectionRef.doc(widget.userId);
     final docSnapshot = await docRef.get();
 
-    if (docSnapshot.exists) {
-      final docId = docSnapshot.id;
-      final menuItemRef = collectionRef.doc(docId).collection('menu').doc(itemId);
-      await menuItemRef.delete();
+    if(collectionType == 'both') {
+      //gastro
+      if (docSnapshot.exists) {
+        final docId = docSnapshot.id;
+        final menuItemRef = collectionRef.doc(docId).collection('menu').doc(itemId);
+        await menuItemRef.delete();
 
-      _fetchMenuData();
+        _fetchMenuData();
+      }
+
+      //resto
+      if (docSnapshot.exists) {
+        final docId = docSnapshot.id;
+        final menuItemRef = collectionRef.doc(docId).collection('menu').doc(itemId);
+        await menuItemRef.delete();
+
+        _fetchMenuData();
+      }
+    } else {
+      if (docSnapshot.exists) {
+        final docId = docSnapshot.id;
+        final menuItemRef = collectionRef.doc(docId).collection('menu').doc(itemId);
+        await menuItemRef.delete();
+
+        _fetchMenuData();
+      }
     }
   }
 
@@ -229,8 +344,8 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                       radius: 60,
                       backgroundImage: _selectedImage != null
                           ? FileImage(_selectedImage!)
-                          : (_imageUrl != null ? NetworkImage(_imageUrl!) : null),
-                      child: _selectedImage == null && _imageUrl == null
+                          : (_imageURL != null ? NetworkImage(_imageURL!) : null),
+                      child: _selectedImage == null && _imageURL == null
                           ? const Icon(Icons.camera_alt, size: 40)
                           : null,
                     ),
@@ -284,30 +399,50 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
 
 
   Future<void> _uploadImage(String menuItemId) async {
+    print('UPLOADING... $_selectedImage, $_imageName, $_storeName, $collectionType, $menuItemId');
     if (_selectedImage == null || isUploading) return;
 
     setState(() {
       isUploading = true;
     });
 
-    final fileName = '${_imageName}.png';
-    final storageRef = _storage.ref().child('$collectionType/menu/$_storeName/$fileName');
 
     try {
-      final uploadTask = await storageRef.putFile(_selectedImage!);
-      final imageUrl = await uploadTask.ref.getDownloadURL();
+      print('INSIDE TRY');
+      // Upload Image
+      if(collectionType == 'both')
+      {
+        print('COLLECTION TYPE: both');
 
-      setState(() {
-        _imageUrl = imageUrl;
-      });
+         final fileName = '$_imageName.png';
 
-      //Image
-      await _firestore
+         print('FILENAME: $fileName');
+
+         await uploadToGastro(fileName, menuItemId);
+         //await uploadToResto(fileName, menuItemId);
+
+      } else {
+
+        print('COLLECTION TYPE: else');
+        final fileName = '$_imageName.png';
+        final storageRef = _storage.ref().child('$collectionType/menu/$_storeName/$fileName');
+
+        final uploadTask = await storageRef.putFile(_selectedImage!);
+        final imageUrl = await uploadTask.ref.getDownloadURL();
+
+        setState(() {
+          _imageURL = imageUrl;
+        });
+
+        await _firestore
           .collection(collectionType!)
           .doc(widget.userId)
           .collection('menu')
           .doc(menuItemId)
-          .update({'photo': _imageUrl});
+          .update({'photo': _imageURL});
+
+      }
+
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Menu updated successfully!')),
@@ -322,6 +457,25 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       });
     }
   }
+
+  Future<void> uploadToGastro(String fileName, String menuItemId) async {
+    final gastroStorageRef = _storage.ref().child('gastropubs/menu/$_storeName/$fileName');
+
+    final gastroUploadTask = await gastroStorageRef.putFile(_selectedImage!);
+    final gastroImageURL = await gastroUploadTask.ref.getDownloadURL();
+
+    // setState(() {
+    //   _imageURL = gastroImageURL;
+    // });
+
+    await _firestore
+        .collection('gastropubs')
+        .doc(widget.userId)
+        .collection('menu')
+        .doc(menuItemId)
+        .update({'photo': gastroImageURL});
+  }
+
 
   void _showEditDialog(Map<String, dynamic> menuItem) {
     _imageName = menuItem['name'] ?? 'No Item Name';

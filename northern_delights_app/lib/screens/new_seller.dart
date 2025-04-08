@@ -28,12 +28,13 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
 
   String? firstName;
   String? lastName;
-  String? email;
+  String? _email;
   // String? password;
   // String? confirmPassword;
   // String? _passwordMismatchWarning;
   String _selectedType = 'Empanadaan';
   String? shop_name;
+  final String _image_url = '';
 
   @override
   Widget build(BuildContext context) {
@@ -123,7 +124,7 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
                 ],
 
                 const SizedBox(height: 20),
-                if(!widget.isSeller) ...[
+                //if(!widget.isSeller) ...[
                   SizedBox(
                     width: MediaQuery.of(context).size.width * 0.8,
                     child: TextField(
@@ -131,7 +132,7 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
                       keyboardType: TextInputType.emailAddress,
                       textAlign: TextAlign.center,
                       onChanged: (value){
-                        email = value;
+                        _email = value;
                       },
                       decoration: InputDecoration(
                         hintText: 'Email Address',
@@ -184,7 +185,7 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
                 //   ),
 
                 const SizedBox(height: 15,),
-                ],
+                //],
 
                 SizedBox(
                   width: MediaQuery.of(context).size.width * 0.8,
@@ -211,6 +212,16 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
                           });
                         },
                       ),
+                      RadioListTile<String>(
+                        title: Text('Empanada/Sinanglao', style: TextStyle(fontSize: 16),),
+                        value: 'both',
+                        groupValue: _selectedType,
+                        onChanged: (String? value) {
+                          setState(() {
+                            _selectedType = value!;
+                          });
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -224,9 +235,11 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
                             isAdmin: false,
                             firstName: _firstNameController.text.trim(),
                             lastName: _lastNameController.text.trim(),
-                            email: '${_shopNameController.text.trim().toLowerCase().replaceAll(' ', '')}@email.com',
+                            //email: '${_shopNameController.text.trim().toLowerCase().replaceAll(' ', '')}@email.com',
+                            email: _emailController.text.trim(),
                             password: '123456',
                             isSeller: widget.isSeller,
+                            image_url: _image_url,
                             shopName: _shopNameController.text.trim());
                       //}
 
@@ -269,11 +282,13 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
     required bool isAdmin,
     required bool isSeller,
     required String shopName,
+    required String image_url,
   }) async {
     try {
       // Create the user with Firebase Auth
       UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(email: '${shopName.trim().toLowerCase().replaceAll(' ', '')}@email.com', password: '123456');
+          .createUserWithEmailAndPassword(email: email, password: '123456');
+          //.createUserWithEmailAndPassword(email: '${shopName.trim().toLowerCase().replaceAll(' ', '')}@email.com', password: '123456');
 
       // Get the user ID
       User? user = userCredential.user;
@@ -285,30 +300,63 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
           'isSeller': isSeller,
           'first_name': firstName,
           'last_name': lastName,
-          'email_address': '${shopName.trim().toLowerCase().replaceAll(' ', '')}@email.com',
+          'email_address': _email,//'${shopName.trim().toLowerCase().replaceAll(' ', '')}@email.com',
           'shop_name' : shopName,
           'store_type' : _selectedType.isNotEmpty ? _selectedType : '',
+          'image_url': _image_url,
           'createdAt': FieldValue.serverTimestamp(),
         });
 
-        _createStoreAccount(
-            firstName: firstName,
-            lastName: lastName,
-            email: '${shopName.trim().toLowerCase().replaceAll(' ', '')}@email.com',
-            password: '123456',
-            isAdmin: isAdmin,
-            isSeller: isSeller,
-            uid: user.uid,
-            storeType: _selectedType,
-            shopName: shopName);
+        if(_selectedType == 'both') {
+          _createStoreAccount(
+              firstName: firstName,
+              lastName: lastName,
+              email: email, //'${shopName.trim().toLowerCase().replaceAll(' ', '')}@email.com',
+              password: '123456',
+              isAdmin: isAdmin,
+              isSeller: isSeller,
+              uid: user.uid,
+              storeType: 'restaurants',
+              shopName: shopName);
+
+          _createStoreAccount(
+              firstName: firstName,
+              lastName: lastName,
+              email: email, //'${shopName.trim().toLowerCase().replaceAll(' ', '')}@email.com',
+              password: '123456',
+              isAdmin: isAdmin,
+              isSeller: isSeller,
+              uid: user.uid,
+              storeType: 'gastropubs',
+              shopName: shopName);
+        } else {
+          _createStoreAccount(
+              firstName: firstName,
+              lastName: lastName,
+              email: email, //'${shopName.trim().toLowerCase().replaceAll(' ', '')}@email.com',
+              password: '123456',
+              isAdmin: isAdmin,
+              isSeller: isSeller,
+              uid: user.uid,
+              storeType: _selectedType,
+              shopName: shopName);
+        }
+
 
         Navigator.push(context, MaterialPageRoute(builder: (context)=> SigninScreen()));
         await user.updateDisplayName('$firstName $lastName');
 
 
         // Add keywords for searching
-        _selectedType == 'restaurants' ? updateKeywordsResto(user.uid, _shopNameController.text.trim(), await fetchMenuKeywordsResto(user.uid))
-            : updateKeywordsGastro(user.uid, _shopNameController.text.trim(), await fetchMenuKeywordsGastro(user.uid));
+        if(_selectedType == 'restaurants') {
+          updateKeywordsResto(user.uid, _shopNameController.text.trim(), await fetchMenuKeywordsResto(user.uid));
+        } else if(_selectedType == 'gastropubs') {
+          updateKeywordsGastro(user.uid, _shopNameController.text.trim(), await fetchMenuKeywordsGastro(user.uid));
+        } else {
+          updateKeywordsResto(user.uid, _shopNameController.text.trim(), await fetchMenuKeywordsResto(user.uid));
+          updateKeywordsGastro(user.uid, _shopNameController.text.trim(), await fetchMenuKeywordsGastro(user.uid));
+        }
+
       }
     } catch (e) {
       print("Error: $e");
@@ -332,7 +380,7 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
         'first_name': firstName,
         'last_name': lastName,
         'name': shopName,
-        'email_address': '${shopName.trim().toLowerCase().replaceAll(' ', '')}@email.com',
+        'email_address': _email, //'${shopName.trim().toLowerCase().replaceAll(' ', '')}@email.com',
         'geopoint': GeoPoint(0.0, 0.0),
         'open_time': Timestamp.now(),
         'close_time': Timestamp.now(),
@@ -341,7 +389,7 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
         'date_added': FieldValue.serverTimestamp(),
         'overview': '',
         'location': '',
-        'image_url': '',
+        'image_url': _image_url,
       });
 
       Navigator.push(context, MaterialPageRoute(builder: (context)=> SellerManagementScreen()));

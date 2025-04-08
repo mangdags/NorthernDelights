@@ -131,7 +131,7 @@ class _MenuDetailsState extends State<MenuDetails> {
                                   const SizedBox(width: 10),
                                   // Price Text
                                   Text(
-                                    double.parse(menu['price'].toString() ?? '0.00').toStringAsFixed(2),
+                                    menu['price'].toStringAsFixed(2),
                                     overflow: TextOverflow.ellipsis,
                                     maxLines: 2,
                                     softWrap: true,
@@ -143,8 +143,21 @@ class _MenuDetailsState extends State<MenuDetails> {
                                   ),
                                 ],
                               ),
+
+                              Text('*Prices may vary',
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 2,
+                                softWrap: true,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.normal,
+                                  fontSize: 12,
+                                  fontStyle: FontStyle.italic,
+                                  color: Colors.redAccent,
+                                ),
+                              ),
                             ],
                           ),
+
                           const Spacer(), // Pushes the image to the far right
                           // Image
                           Image.network(

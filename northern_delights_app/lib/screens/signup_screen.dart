@@ -224,6 +224,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               email: _emailController.text.trim(),
                               password: _passwordController.text.trim(),
                               isSeller: widget.isSeller,
+                              image_url: '',
                               shopName: _shopNameController.text.trim());
                         }
                       }
@@ -322,6 +323,7 @@ class _SignupScreenState extends State<SignupScreen> {
     required bool isAdmin,
     required bool isSeller,
     required String shopName,
+    required String image_url,
   }) async {
     try {
       // Create the user with Firebase Auth
@@ -341,6 +343,7 @@ class _SignupScreenState extends State<SignupScreen> {
           'email_address': email,
           'shop_name' : shopName,
           'store_type' : _selectedType.isNotEmpty ? _selectedType : '',
+          'image_url': image_url,
           'createdAt': FieldValue.serverTimestamp(),
         });
 
@@ -353,13 +356,31 @@ class _SignupScreenState extends State<SignupScreen> {
             isSeller: isSeller,
             uid: user.uid,
             storeType: _selectedType,
+            image_url: image_url,
             shopName: shopName);
+
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Signup Successful'),
+              content: Text('Go to your email and verify your account'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+
+        await user.sendEmailVerification();
 
         Navigator.push(context, MaterialPageRoute(builder: (context)=> SigninScreen()));
         await user.updateDisplayName('$firstName $lastName');
-        //TODO: Toast or alert user to verify email
-
-        await user.sendEmailVerification();
       }
     } catch (e) {
       print("Error: $e");
@@ -376,6 +397,7 @@ class _SignupScreenState extends State<SignupScreen> {
     required String uid,
     required String storeType,
     required String shopName,
+    required String image_url,
   }) async {
     try {
 

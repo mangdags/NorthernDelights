@@ -61,12 +61,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         firstNameController = TextEditingController(text: doc['first_name'] ?? '');
         lastNameController = TextEditingController(text: doc['last_name'] ?? '');
         shopNameController = TextEditingController(text: doc['shop_name'] ?? '');
+        _imageUrl = doc['image_url'] ?? '';
         isLoading = false;
       });
     }
     if (isSeller){
       storeType = doc['store_type'];
       _loadStoreData(storeType);
+    } else {
+      storeType = 'users';
     }
   }
 
@@ -118,14 +121,41 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     final closeTimestamp = Timestamp.fromDate(selectedCloseTime);
 
     if(isSeller) {
-      await FirebaseFirestore.instance.collection(type).doc(widget.userId).update({
-        'name' : shopNameController.text,
-        'open_time': openTimestamp,
-        'close_time': closeTimestamp,
-        'location' : _locationController.text,
-        'overview' : _overviewController.text,
-        //'geopoint' : GeoPoint(latitude!, longitude!),
-      });
+      if(storeType == 'both') {
+        await FirebaseFirestore.instance.collection('restaurants').doc(widget.userId).update({
+          'name' : shopNameController.text,
+          'open_time': openTimestamp,
+          'close_time': closeTimestamp,
+          'location' : _locationController.text,
+          'overview' : _overviewController.text,
+          //'geopoint' : GeoPoint(latitude!, longitude!),
+        });
+
+        await FirebaseFirestore.instance.collection('gastropubs').doc(widget.userId).update({
+          'name' : shopNameController.text,
+          'open_time': openTimestamp,
+          'close_time': closeTimestamp,
+          'location' : _locationController.text,
+          'overview' : _overviewController.text,
+          //'geopoint' : GeoPoint(latitude!, longitude!),
+        });
+
+
+        await _uploadImage('restaurants', '${widget.userId}.png');
+        await _uploadImage('gastropubs', '${widget.userId}.png');
+
+      } else {
+        await FirebaseFirestore.instance.collection(type).doc(widget.userId).update({
+          'name' : shopNameController.text,
+          'open_time': openTimestamp,
+          'close_time': closeTimestamp,
+          'location' : _locationController.text,
+          'overview' : _overviewController.text,
+          //'geopoint' : GeoPoint(latitude!, longitude!),
+        });
+
+        _uploadImage(storeType, '${widget.userId}.png');
+      }
 
       // if (!latitude.isNaN && !longitude.isNaN) {
       //   setState(() {
@@ -137,14 +167,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       //   ));
       // }
     }
-
-    await _firestore.collection('users').doc(widget.userId).update({
-      'first_name': firstNameController.text,
-      'last_name': lastNameController.text,
-      'shop_name': shopNameController.text,
-    });
-
-    _uploadImage();
 
     if(!isUploading){
       ScaffoldMessenger.of(context).showSnackBar(
@@ -220,6 +242,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Future<void> _pickImage() async {
     final pickedFile = await _imagePicker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
+      final fileSize = await pickedFile.length();
+      if(fileSize > 3000000) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Image size exceeds 3MB')),
+        );
+        return;
+      }
       setState(() {
         _selectedImage = File(pickedFile.path);
       });
@@ -227,15 +256,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   }
 
 
-  Future<void> _uploadImage() async {
+  Future<void> _uploadImage(String _storeType, String imageFile) async {
     if (_selectedImage == null || isUploading) return;
 
     setState(() {
       isUploading = true;
     });
 
-    final fileName = '${widget.userId}.png';
-    final storageRef = _storage.ref().child('$storeType/$fileName');
+    final storageRef = _storage.ref().child('$_storeType/$imageFile');
 
     try {
       final uploadTask = await storageRef.putFile(_selectedImage!);
@@ -245,7 +273,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         _imageUrl = imageUrl;
       });
 
-      await _firestore.collection(storeType).doc(widget.userId).update({
+      await _firestore.collection(_storeType).doc(widget.userId).update({
         'image_url': _imageUrl,
       });
 
@@ -275,6 +303,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           child: Column(
             children: [
               // Profile Image
+              if(_imageUrl != null)
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: CircleAvatar(
+                    radius: 60,
+                    backgroundImage: NetworkImage(_imageUrl!),
+                  ),
+                )
+              else
               GestureDetector(
                 onTap: _pickImage,
                 child: CircleAvatar(
@@ -300,6 +337,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               ),
               const SizedBox(height: 12),  // Vertical space
 
+              // IS SELLER
               // Show shop name if user is a seller
               if (isSeller) ...[
                 TextField(
@@ -425,8 +463,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text('Save Changes'),
                 ),
+              ] else ...[
+                ElevatedButton(
+                  onPressed: isUploading
+                      ? null // Disable the button while uploading
+                      : () => _updateProfile(isSeller, storeType),
+                  child: isUploading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Save Changes'),
+                ),
               ],
-
+              // IS SELLER END
               const SizedBox(height: 20),  // Space below the form
             ],
           ),

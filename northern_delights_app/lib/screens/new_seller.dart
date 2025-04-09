@@ -193,7 +193,7 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       RadioListTile<String>(
-                        title: Text('Empanadaan', style: TextStyle(fontSize: 16),),
+                        title: Text('Gastropubs', style: TextStyle(fontSize: 16),),
                         value: 'gastropubs',
                         groupValue: _selectedType,
                         onChanged: (String? value) {
@@ -203,7 +203,7 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
                         },
                       ),
                       RadioListTile<String>(
-                        title: Text('Sinanglao\'n', style: TextStyle(fontSize: 16),),
+                        title: Text('Restaurants', style: TextStyle(fontSize: 16),),
                         value: 'restaurants',
                         groupValue: _selectedType,
                         onChanged: (String? value) {
@@ -213,7 +213,7 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
                         },
                       ),
                       RadioListTile<String>(
-                        title: Text('Empanada/Sinanglao', style: TextStyle(fontSize: 16),),
+                        title: Text('Gastropub/Restaurant', style: TextStyle(fontSize: 16),),
                         value: 'both',
                         groupValue: _selectedType,
                         onChanged: (String? value) {
@@ -239,9 +239,11 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
                             email: _emailController.text.trim(),
                             password: '123456',
                             isSeller: widget.isSeller,
-                            image_url: _image_url,
+                            imageURL: _image_url,
+                            isDualStore: _selectedType == 'both' ? true : false,
                             shopName: _shopNameController.text.trim());
                       //}
+                        Navigator.of(context).pop();
 
                     } catch (e){
                       print(e);
@@ -281,8 +283,9 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
     required String password,
     required bool isAdmin,
     required bool isSeller,
+    required bool isDualStore,
     required String shopName,
-    required String image_url,
+    required String imageURL,
   }) async {
     try {
       // Create the user with Firebase Auth
@@ -302,49 +305,26 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
           'last_name': lastName,
           'email_address': _email,//'${shopName.trim().toLowerCase().replaceAll(' ', '')}@email.com',
           'shop_name' : shopName,
-          'store_type' : _selectedType.isNotEmpty ? _selectedType : '',
+          'store_type' : _selectedType.isNotEmpty ? _selectedType == 'both' ? 'gastropubs' : _selectedType : '',
           'image_url': _image_url,
           'createdAt': FieldValue.serverTimestamp(),
         });
 
-        if(_selectedType == 'both') {
-          _createStoreAccount(
-              firstName: firstName,
-              lastName: lastName,
-              email: email, //'${shopName.trim().toLowerCase().replaceAll(' ', '')}@email.com',
-              password: '123456',
-              isAdmin: isAdmin,
-              isSeller: isSeller,
-              uid: user.uid,
-              storeType: 'restaurants',
-              shopName: shopName);
 
-          _createStoreAccount(
+        _createStoreAccount(
               firstName: firstName,
               lastName: lastName,
               email: email, //'${shopName.trim().toLowerCase().replaceAll(' ', '')}@email.com',
               password: '123456',
               isAdmin: isAdmin,
               isSeller: isSeller,
-              uid: user.uid,
-              storeType: 'gastropubs',
-              shopName: shopName);
-        } else {
-          _createStoreAccount(
-              firstName: firstName,
-              lastName: lastName,
-              email: email, //'${shopName.trim().toLowerCase().replaceAll(' ', '')}@email.com',
-              password: '123456',
-              isAdmin: isAdmin,
-              isSeller: isSeller,
+              isDualStore: isDualStore,
               uid: user.uid,
               storeType: _selectedType,
               shopName: shopName);
-        }
 
-
-        Navigator.push(context, MaterialPageRoute(builder: (context)=> SigninScreen()));
-        await user.updateDisplayName('$firstName $lastName');
+        //Navigator.push(context, MaterialPageRoute(builder: (context)=> SigninScreen()));
+        //await user.updateDisplayName('$firstName $lastName');
 
 
         // Add keywords for searching
@@ -353,7 +333,6 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
         } else if(_selectedType == 'gastropubs') {
           updateKeywordsGastro(user.uid, _shopNameController.text.trim(), await fetchMenuKeywordsGastro(user.uid));
         } else {
-          updateKeywordsResto(user.uid, _shopNameController.text.trim(), await fetchMenuKeywordsResto(user.uid));
           updateKeywordsGastro(user.uid, _shopNameController.text.trim(), await fetchMenuKeywordsGastro(user.uid));
         }
 
@@ -370,13 +349,15 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
     required String password,
     required bool isAdmin,
     required bool isSeller,
+    required bool isDualStore,
     required String uid,
     required String storeType,
     required String shopName,
   }) async {
     try {
+      print('STORE: $storeType, $uid');
 
-      await FirebaseFirestore.instance.collection(storeType).doc(uid).set({
+      await FirebaseFirestore.instance.collection(storeType == 'both' ? 'gastropubs' : storeType).doc(uid).set({
         'first_name': firstName,
         'last_name': lastName,
         'name': shopName,
@@ -389,6 +370,7 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
         'date_added': FieldValue.serverTimestamp(),
         'overview': '',
         'location': '',
+        'isDualStore': storeType == 'both' ? true : false,
         'image_url': _image_url,
       });
 

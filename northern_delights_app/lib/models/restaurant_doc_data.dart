@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:northern_delights_app/models/gastropub_doc_data.dart';
+import 'package:rxdart/rxdart.dart';
+
 
 class RestaurantAllUnsorted {
   Stream<List<Map<String, dynamic>>> getRestaurantData({String? keyword}) {
-    CollectionReference restaurants =
-    FirebaseFirestore.instance.collection('restaurants');
+    CollectionReference restaurants = FirebaseFirestore.instance.collection('restaurants');
     Query query = restaurants;
 
     // Add keyword search filter if provided
@@ -121,11 +122,35 @@ class RestaurantService {
   Stream<List<Map<String, dynamic>>> getStream(String filter, {String? keyword}) {
     switch (filter.trim()) {
       case 'Most Viewed':
-        return RestaurantMostViewed().getRestaurantMostViewed(keyword: keyword);
+        final restaurantStream = RestaurantMostViewed().getRestaurantMostViewed(keyword: keyword);
+        final gastroRestoStream = GastroRestoMostViewed().getGastroRestoMostViewed();
+
+        return CombineLatestStream.list([
+          restaurantStream,
+          gastroRestoStream,
+        ]).map((lists) {
+          return [...lists[0], ...lists[1]];
+        });
       case 'Latest':
-        return RestaurantLatestAdded().getRestaurantLatestAdded(keyword: keyword);
+        final restaurantStream = RestaurantLatestAdded().getRestaurantLatestAdded(keyword: keyword);
+        final gastroRestoStream = GastroRestoLatestAdded().getGastroRestoLatestAdded();
+
+        return CombineLatestStream.list([
+          restaurantStream,
+          gastroRestoStream,
+        ]).map((lists) {
+          return [...lists[0], ...lists[1]];
+        });
       default:
-        return RestaurantAllUnsorted().getRestaurantData(keyword: keyword);
+        final restaurantStream = RestaurantAllUnsorted().getRestaurantData(keyword: keyword);
+        final gastroRestoStream = GastroRestoAllUnsorted().getGastroRestoData();
+
+        return CombineLatestStream.list([
+          restaurantStream,
+          gastroRestoStream,
+        ]).map((lists) {
+          return [...lists[0], ...lists[1]];
+        });
     }
   }
 }

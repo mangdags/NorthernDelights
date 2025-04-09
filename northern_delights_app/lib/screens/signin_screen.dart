@@ -18,6 +18,36 @@ class _SigninScreenState extends State<SigninScreen> {
   late bool isEmailVerified = true;
   late bool isCredentialsCorrect = true;
 
+  void showEmailVerificationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevents tapping outside to close
+      builder: (context) => AlertDialog(
+        title: Text("Email Not Verified"),
+        content: Text("Please verify your email address. Didn't receive the email?"),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final user = FirebaseAuth.instance.currentUser;
+              if (user != null && !user.emailVerified) {
+                await user.sendEmailVerification();
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Verification email sent to ${user.email}")),
+                );
+              }
+            },
+            child: Text("Resend Verification"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text("Dismiss"),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -99,9 +129,16 @@ class _SigninScreenState extends State<SigninScreen> {
 
                     //TODO: Check if the user is verified
 
-                    //if(userLoggedIn != null && isEmailVerified){
+                    if(userLoggedIn != null && isEmailVerified){
                       Navigator.push(context, MaterialPageRoute(builder: (context)=> HomeScreen()));
-                    //}
+                    }
+
+                    await result?.reload();
+
+                    if(userLoggedIn != null && !isEmailVerified)
+                    {
+                      showEmailVerificationDialog(context);
+                    }
                   } catch (e)
                   {
                     isCredentialsCorrect = false;
@@ -168,6 +205,7 @@ class _SigninScreenState extends State<SigninScreen> {
                     child: Text('Signup'),),
                 ],
               ),
+
               const SizedBox(height: 5),
               // Row(
               //   mainAxisAlignment: MainAxisAlignment.center,

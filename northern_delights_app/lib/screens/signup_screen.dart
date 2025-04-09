@@ -184,7 +184,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         RadioListTile<String>(
-                          title: Text('Empanadaan', style: TextStyle(fontSize: 16),),
+                          title: Text('Gastropubs', style: TextStyle(fontSize: 16),),
                           value: 'gastropubs',
                           groupValue: _selectedType,
                           onChanged: (String? value) {
@@ -194,7 +194,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           },
                         ),
                         RadioListTile<String>(
-                          title: Text('Sinanglao\'n', style: TextStyle(fontSize: 16),),
+                          title: Text('Restaurants', style: TextStyle(fontSize: 16),),
                           value: 'restaurants',
                           groupValue: _selectedType,
                           onChanged: (String? value) {

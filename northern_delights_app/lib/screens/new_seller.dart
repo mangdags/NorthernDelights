@@ -212,16 +212,16 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
                           });
                         },
                       ),
-                      RadioListTile<String>(
-                        title: Text('Gastropub/Restaurant', style: TextStyle(fontSize: 16),),
-                        value: 'both',
-                        groupValue: _selectedType,
-                        onChanged: (String? value) {
-                          setState(() {
-                            _selectedType = value!;
-                          });
-                        },
-                      ),
+                      // RadioListTile<String>(
+                      //   title: Text('Gastropub/Restaurant', style: TextStyle(fontSize: 16),),
+                      //   value: 'both',
+                      //   groupValue: _selectedType,
+                      //   onChanged: (String? value) {
+                      //     setState(() {
+                      //       _selectedType = value!;
+                      //     });
+                      //   },
+                      // ),
                     ],
                   ),
                 ),

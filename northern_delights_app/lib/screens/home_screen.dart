@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:northern_delights_app/models/gastropub_doc_data.dart';
 import 'package:northern_delights_app/models/restaurant_doc_data.dart';
+import 'package:northern_delights_app/screens/establishments_map_screen.dart';
 import 'package:northern_delights_app/screens/reviews_screen.dart';
 import 'package:northern_delights_app/screens/seller_management_screen.dart';
 import 'package:northern_delights_app/screens/signin_screen.dart';
@@ -279,6 +280,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     );
                   },
                 ),
+              ListTile(
+                leading: Icon(Icons.map),
+                title: Text('Map'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EstablishmentsMap(),
+                    ),
+                  );
+                },
+              ),
               /*
               ListTile(
                 leading: const Icon(Icons.settings),

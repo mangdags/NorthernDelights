@@ -392,6 +392,8 @@ class _NewSellerScreenState extends State<NewSellerScreen> {
         'image_url': _image_url,
       });
 
+      FirebaseFirestore.instance.collection(storeType).doc(uid).collection('menu');
+
       Navigator.push(context, MaterialPageRoute(builder: (context)=> SellerManagementScreen()));
 
         } catch (e) {

@@ -25,6 +25,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   String? collectionType;
   String? _imageName;
   String? _storeName;
+  String? _storeType;
 
   File? _selectedImage;
   String? _imageURL;
@@ -35,6 +36,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   @override
   void initState() {
     super.initState();
+    _initializeUser();
     _fetchMenuData();
     _initializeShop();
   }
@@ -43,22 +45,29 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     final gastropubData = await _getCollectionData('gastropubs');
     final restaurantData = await _getCollectionData('restaurants');
 
+
+    print('Store Type: $_storeType');
+
     if(gastropubData != null && restaurantData != null) {
       setState(() {
         collectionType = 'both';
         menuItems = [...gastropubData, ...restaurantData];
       });
-    } else if (restaurantData == null && gastropubData != null) {
+    }
+
+    if(_storeType == 'gastropubs') {
       setState(() {
         collectionType = 'gastropubs';
-        menuItems = gastropubData;
+        menuItems = gastropubData!;
       });
-    } else if (restaurantData != null && gastropubData == null) {
+    } else if (_storeType == 'restaurants') {
       setState(() {
         collectionType = 'restaurants';
-        menuItems = restaurantData;
+        menuItems = restaurantData!;
       });
     }
+
+    print('Collection Type: $collectionType');
   }
 
   Future<void> _initializeShop() async{
@@ -72,6 +81,20 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       }
     } catch (e) {
       print('Error initializing $collectionType! data: $e');
+    }
+  }
+
+  Future<void> _initializeUser() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users').doc(widget.userId)
+          .get();
+
+      if (snapshot.exists) {
+        _storeType = snapshot.data()?['store_type'];
+      }
+    } catch (e) {
+      print('Error initializing user data: $e');
     }
   }
 
@@ -105,9 +128,11 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   }
 
 
-  Future<void> _addMenuItem(String name, double price) async {
-
+  Future<void> _addMenuItem(String name, double price) async
+  {
+    print('Adding menu item: $name, $price, $collectionType');
     if (collectionType == null) return;
+
     if (_selectedImage != null) {
       final fileSize = await _selectedImage?.length();
       if(fileSize! > 3000000) {
@@ -118,13 +143,15 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       }
       if(collectionType == 'gastropubs')
       {
+        print('COLLECTION: Gastropub');
         await _addMenuOnCollection(FirebaseFirestore.instance.collection('gastropubs'), name, price);
 
       } else if(collectionType == 'restaurants') {
-
+        print('COLLECTION: Restaurant');
         await _addMenuOnCollection(FirebaseFirestore.instance.collection('restaurants'), name, price);
 
       } else {
+        print('COLLECTION: Both');
         await _addMenuOnCollection(FirebaseFirestore.instance.collection('gastropubs'), name, price);
         await _addMenuOnCollection(FirebaseFirestore.instance.collection('restaurants'), name, price);
       }
@@ -134,6 +161,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
 
   Future<void> _addMenuOnCollection(CollectionReference<Map<String, dynamic>> collectionRef, String name, double price) async
   {
+    print('CollectionType: $collectionType');
     if(collectionType == 'both')
     {
       //resto

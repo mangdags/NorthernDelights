@@ -44,7 +44,6 @@ class GastropubLatestAdded {
       }).toList();
     });
   }
-
 }
 
 class GastropubService {
@@ -54,6 +53,8 @@ class GastropubService {
         return GastropubMostViewed().getGastropubMostViewed();
       case 'Latest':
         return GastropubLatestAdded().getGastropubLatestAdded();
+      // case 'Nearest':
+      //   return GastropubNearest().getGastroNearest();
       default:
         return GastropubAllUnsorted().getGastropubData();
     }
@@ -172,4 +173,54 @@ Future<bool> hasGastroResult(String keywordStr) async {
   GastropubSearch gastropubSearch = GastropubSearch();
   var snapshot = await gastropubSearch.getGastroSearchOr(keyword: keywordStr).first;
   return snapshot.isEmpty ? false : true;
+}
+
+
+
+//DUAL STORES
+class GastroRestoAllUnsorted {
+  Stream<List<Map<String, dynamic>>> getGastroRestoData() {
+    return FirebaseFirestore.instance.collection('gastropubs').where('isDualStore', isEqualTo: true).snapshots().map(
+          (snapshot) {
+        return snapshot.docs.map((doc) {
+          var data = doc.data();
+          data['id'] = doc.id;
+          return data;
+        }).toList();
+      },
+    );
+  }
+}
+
+class GastroRestoMostViewed {
+  Stream<List<Map<String, dynamic>>> getGastroRestoMostViewed() {
+    return FirebaseFirestore.instance
+        .collection('gastropubs').where('isDualStore', isEqualTo: true)
+        .orderBy('view_count', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        var data = doc.data();
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    });
+  }
+}
+
+class GastroRestoLatestAdded {
+  Stream<List<Map<String, dynamic>>> getGastroRestoLatestAdded() {
+    return FirebaseFirestore.instance
+        .collection('gastropubs')
+        .where('isDualStore', isEqualTo: true)
+        .orderBy('date_added', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        var data = doc.data();
+        data['id'] = doc.id; // Attach the document ID to the data
+        return data;
+      }).toList();
+    });
+  }
 }

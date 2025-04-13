@@ -171,7 +171,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   selectedCategory: _selectedCategory,
                 ),
                 const SizedBox(height: 20),
-                const Text('Empanadaan',
+                const Text('Gastropubs',
                     style: TextStyle(
                       fontSize: 18,
                       fontFamily: 'Roboto',
@@ -183,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: GastropubCards(isRegular: !isSeller, selectedCategory: _selectedCategory),
                 ),
                 SizedBox(height: 5),
-                Text('Sinanglao\'n',
+                Text('Restaurants',
                     style: TextStyle(
                       fontSize: 18,
                       fontFamily: 'Roboto',

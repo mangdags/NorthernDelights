@@ -45,22 +45,12 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     final gastropubData = await _getCollectionData('gastropubs');
     final restaurantData = await _getCollectionData('restaurants');
 
-
-    print('Store Type: $_storeType');
-
-    if(gastropubData != null && restaurantData != null) {
-      setState(() {
-        collectionType = 'both';
-        menuItems = [...gastropubData, ...restaurantData];
-      });
-    }
-
-    if(_storeType == 'gastropubs') {
+    if(gastropubData != null) {
       setState(() {
         collectionType = 'gastropubs';
         menuItems = gastropubData!;
       });
-    } else if (_storeType == 'restaurants') {
+    } else if (restaurantData != null) {
       setState(() {
         collectionType = 'restaurants';
         menuItems = restaurantData!;
@@ -149,11 +139,6 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       } else if(collectionType == 'restaurants') {
         print('COLLECTION: Restaurant');
         await _addMenuOnCollection(FirebaseFirestore.instance.collection('restaurants'), name, price);
-
-      } else {
-        print('COLLECTION: Both');
-        await _addMenuOnCollection(FirebaseFirestore.instance.collection('gastropubs'), name, price);
-        await _addMenuOnCollection(FirebaseFirestore.instance.collection('restaurants'), name, price);
       }
 
     }
@@ -161,56 +146,19 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
 
   Future<void> _addMenuOnCollection(CollectionReference<Map<String, dynamic>> collectionRef, String name, double price) async
   {
-    print('CollectionType: $collectionType');
-    if(collectionType == 'both')
-    {
-      //resto
-      final restoCollectionRef = FirebaseFirestore.instance.collection('restaurants');
-      final restoDocRef = await restoCollectionRef.doc(widget.userId);
-      final restoDocSnapshot = await restoDocRef.get();
+    final docRef = await collectionRef.doc(widget.userId);
+    final docSnapshot = await docRef.get();
 
-      if (restoDocSnapshot.exists) {
-        final restoDocId = restoDocSnapshot.id;
-        final restoMenuCollectionRef = restoCollectionRef.doc(restoDocId).collection('menu');
+    if (docSnapshot.exists) {
+      final docId = docSnapshot.id;
+      final menuCollectionRef = collectionRef.doc(docId).collection('menu');
 
-        // Add item and get its document reference
-        final restoNewMenuItemRef = await restoMenuCollectionRef.add({'name': name, 'price': price, 'photo': ''});
-        final restoMenuItemId = restoNewMenuItemRef.id;
+      // Add item and get its document reference
+      final newMenuItemRef = await menuCollectionRef.add({'name': name, 'price': price, 'photo': ''});
+      final menuItemId = newMenuItemRef.id;
 
-        await _uploadImage(restoMenuItemId);
-      }
-
-        //gastro
-        final gastroCollectionRef = FirebaseFirestore.instance.collection('gastropubs');
-        final gastroDocRef = await gastroCollectionRef.doc(widget.userId);
-        final gastroDocSnapshot = await gastroDocRef.get();
-
-        if (gastroDocSnapshot.exists) {
-          final gastroDocId = gastroDocSnapshot.id;
-          final gastroMenuCollectionRef = gastroCollectionRef.doc(gastroDocId).collection('menu');
-
-          // Add item and get its document reference
-          final gastroNewMenuItemRef = await gastroMenuCollectionRef.add({'name': name, 'price': price, 'photo': ''});
-          final gastroMenuItemId = gastroNewMenuItemRef.id;
-
-          await _uploadImage(gastroMenuItemId);
-        }
-    } else {
-      final docRef = await collectionRef.doc(widget.userId);
-      final docSnapshot = await docRef.get();
-
-      if (docSnapshot.exists) {
-        final docId = docSnapshot.id;
-        final menuCollectionRef = collectionRef.doc(docId).collection('menu');
-
-        // Add item and get its document reference
-        final newMenuItemRef = await menuCollectionRef.add({'name': name, 'price': price, 'photo': ''});
-        final menuItemId = newMenuItemRef.id;
-
-        await _uploadImage(menuItemId);
-      }
+      await _uploadImage(menuItemId);
     }
-
 
     // Refresh menu items
     _fetchMenuData();
@@ -220,53 +168,22 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       updateKeywordsResto(widget.userId, _storeName!, await fetchMenuKeywordsResto(widget.userId));
     } else if(collectionType == 'gastropubs') {
       updateKeywordsGastro(widget.userId, _storeName!, await fetchMenuKeywordsGastro(widget.userId));
-    } else {
-      updateKeywordsResto(widget.userId, _storeName!, await fetchMenuKeywordsResto(widget.userId));
-      updateKeywordsGastro(widget.userId, _storeName!, await fetchMenuKeywordsGastro(widget.userId));
     }
   }
 
 
-  Future<void> _updateMenuItem(String itemId, String name, double price) async {
+  Future<void> _updateMenuItem(String itemId, String name, double price) async
+  {
+    final collectionRef = FirebaseFirestore.instance.collection(collectionType!);
+    final docRef = await collectionRef.doc(widget.userId);
+    final docSnapshot = await docRef.get();
 
-    if(collectionType == 'both') {
-      //gastro
-      final gastroCollectionRef = FirebaseFirestore.instance.collection('gastropubs');
-      final gastroDocRef = await gastroCollectionRef.doc(widget.userId);
-      final gastroDocSnapshot = await gastroDocRef.get();
+    if (docSnapshot.exists) {
+      final docId = docSnapshot.id;
+      final menuItemRef = collectionRef.doc(docId).collection('menu').doc(itemId);
+      await menuItemRef.update({'name': name, 'price': price});
 
-      if (gastroDocSnapshot.exists) {
-        final docId = gastroDocSnapshot.id;
-        final menuItemRef = gastroCollectionRef.doc(docId).collection('menu').doc(itemId);
-        await menuItemRef.update({'name': name, 'price': price});
-
-        _fetchMenuData();
-      }
-
-      //resto
-      final restoCollectionRef = FirebaseFirestore.instance.collection('restaurants');
-      final restoDocRef = await restoCollectionRef.doc(widget.userId);
-      final restoDocSnapShot = await restoDocRef.get();
-
-      if (restoDocSnapShot.exists) {
-        final docId = restoDocSnapShot.id;
-        final menuItemRef = restoCollectionRef.doc(docId).collection('menu').doc(itemId);
-        await menuItemRef.update({'name': name, 'price': price});
-
-        _fetchMenuData();
-      }
-    } else {
-      final collectionRef = FirebaseFirestore.instance.collection(collectionType!);
-      final docRef = await collectionRef.doc(widget.userId);
-      final docSnapshot = await docRef.get();
-
-      if (docSnapshot.exists) {
-        final docId = docSnapshot.id;
-        final menuItemRef = collectionRef.doc(docId).collection('menu').doc(itemId);
-        await menuItemRef.update({'name': name, 'price': price});
-
-        _fetchMenuData();
-      }
+      _fetchMenuData();
     }
   }
 
@@ -277,32 +194,12 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     final docRef = await collectionRef.doc(widget.userId);
     final docSnapshot = await docRef.get();
 
-    if(collectionType == 'both') {
-      //gastro
-      if (docSnapshot.exists) {
-        final docId = docSnapshot.id;
-        final menuItemRef = collectionRef.doc(docId).collection('menu').doc(itemId);
-        await menuItemRef.delete();
+    if (docSnapshot.exists) {
+      final docId = docSnapshot.id;
+      final menuItemRef = collectionRef.doc(docId).collection('menu').doc(itemId);
+      await menuItemRef.delete();
 
-        _fetchMenuData();
-      }
-
-      //resto
-      if (docSnapshot.exists) {
-        final docId = docSnapshot.id;
-        final menuItemRef = collectionRef.doc(docId).collection('menu').doc(itemId);
-        await menuItemRef.delete();
-
-        _fetchMenuData();
-      }
-    } else {
-      if (docSnapshot.exists) {
-        final docId = docSnapshot.id;
-        final menuItemRef = collectionRef.doc(docId).collection('menu').doc(itemId);
-        await menuItemRef.delete();
-
-        _fetchMenuData();
-      }
+      _fetchMenuData();
     }
   }
 
@@ -427,7 +324,6 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
 
 
   Future<void> _uploadImage(String menuItemId) async {
-    print('UPLOADING... $_selectedImage, $_imageName, $_storeName, $collectionType, $menuItemId');
     if (_selectedImage == null || isUploading) return;
 
     setState(() {
@@ -436,41 +332,23 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
 
 
     try {
-      print('INSIDE TRY');
       // Upload Image
-      if(collectionType == 'both')
-      {
-        print('COLLECTION TYPE: both');
+      final fileName = '$_imageName.png';
+      final storageRef = _storage.ref().child('$collectionType/menu/$_storeName/$fileName');
 
-         final fileName = '$_imageName.png';
+      final uploadTask = await storageRef.putFile(_selectedImage!);
+      final imageUrl = await uploadTask.ref.getDownloadURL();
 
-         print('FILENAME: $fileName');
+      setState(() {
+        _imageURL = imageUrl;
+      });
 
-         await uploadToGastro(fileName, menuItemId);
-         //await uploadToResto(fileName, menuItemId);
-
-      } else {
-
-        print('COLLECTION TYPE: else');
-        final fileName = '$_imageName.png';
-        final storageRef = _storage.ref().child('$collectionType/menu/$_storeName/$fileName');
-
-        final uploadTask = await storageRef.putFile(_selectedImage!);
-        final imageUrl = await uploadTask.ref.getDownloadURL();
-
-        setState(() {
-          _imageURL = imageUrl;
-        });
-
-        await _firestore
-          .collection(collectionType!)
-          .doc(widget.userId)
-          .collection('menu')
-          .doc(menuItemId)
-          .update({'photo': _imageURL});
-
-      }
-
+      await _firestore
+        .collection(collectionType!)
+        .doc(widget.userId)
+        .collection('menu')
+        .doc(menuItemId)
+        .update({'photo': _imageURL});
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Menu updated successfully!')),
@@ -484,24 +362,6 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
         isUploading = false;
       });
     }
-  }
-
-  Future<void> uploadToGastro(String fileName, String menuItemId) async {
-    final gastroStorageRef = _storage.ref().child('gastropubs/menu/$_storeName/$fileName');
-
-    final gastroUploadTask = await gastroStorageRef.putFile(_selectedImage!);
-    final gastroImageURL = await gastroUploadTask.ref.getDownloadURL();
-
-    // setState(() {
-    //   _imageURL = gastroImageURL;
-    // });
-
-    await _firestore
-        .collection('gastropubs')
-        .doc(widget.userId)
-        .collection('menu')
-        .doc(menuItemId)
-        .update({'photo': gastroImageURL});
   }
 
 

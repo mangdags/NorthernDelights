@@ -1,14 +1,18 @@
 class Review {
   final String userName;
   final String reviewText;
-  final double rating;
+  final double foodRating;
+  final double svcRating;
+  final double atmosRating;
   final String? reviewImage;
   final DateTime dateTime;
 
   Review({
     required this.userName,
     required this.reviewText,
-    required this.rating,
+    required this.foodRating,
+    required this.svcRating,
+    required this.atmosRating,
     required this.reviewImage,
     required this.dateTime,
   });
@@ -18,7 +22,9 @@ class Review {
     return {
       'customer': userName,
       'feedback': reviewText,
-      'star': rating,
+      'foodRating': foodRating,
+      'serviceRating': svcRating,
+      'atmosphereRating': atmosRating,
       'reviewimage': reviewImage,
       'datetime': dateTime,
     };

@@ -45,7 +45,9 @@ class ReviewsScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               final review = reviews[index].data() as Map<String, dynamic>;
               final reviewerName = review['customer'] ?? 'Anonymous';
-              final rating = review['star'] ?? 0.0;
+              final foodRating = review['foodRating'] ?? 0.0;
+              final serviceRating = review['serviceRating'] ?? 0.0;
+              final atmosphereRating = review['atmosphereRating'] ?? 0.0;
               final comment = review['feedback'] ?? 'No comment provided';
               final timestamp = (review['datetime'] as Timestamp?)?.toDate();
 
@@ -69,7 +71,27 @@ class ReviewsScreen extends StatelessWidget {
                           Icon(Icons.star, color: Colors.amber, size: 20),
                           const SizedBox(width: 4),
                           Text(
-                            rating.toStringAsFixed(1),
+                            foodRating.toStringAsFixed(1),
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Icon(Icons.star, color: Colors.amber, size: 20),
+                          const SizedBox(width: 4),
+                          Text(
+                            serviceRating.toStringAsFixed(1),
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Icon(Icons.star, color: Colors.amber, size: 20),
+                          const SizedBox(width: 4),
+                          Text(
+                            atmosphereRating.toStringAsFixed(1),
                             style: const TextStyle(fontSize: 16),
                           ),
                         ],

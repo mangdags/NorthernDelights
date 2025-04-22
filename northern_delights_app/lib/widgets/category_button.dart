@@ -34,13 +34,22 @@ class CategoryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        buildCategoryButton('Most Viewed', Color(0xFFFBFBFB), Color(0xFFC5C5C5)),
-        //buildCategoryButton('Nearby', Color(0xFFFBFBFB), Color(0xFFC5C5C5)),
-        buildCategoryButton('Latest', Color(0xFFFBFBFB), Color(0xFFC5C5C5)),
-      ],
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          buildCategoryButton('Most Viewed', Color(0xFFFBFBFB), Color(0xFFC5C5C5)),
+          const SizedBox(width: 15,),
+          //buildCategoryButton('Nearby', Color(0xFFFBFBFB), Color(0xFFC5C5C5)),
+          buildCategoryButton('Latest', Color(0xFFFBFBFB), Color(0xFFC5C5C5)),
+          const SizedBox(width: 15,),
+          buildCategoryButton('Sinanglao', Color(0xFFFBFBFB), Color(0xFFC5C5C5)),
+          const SizedBox(width: 15,),
+          buildCategoryButton('Empanada', Color(0xFFFBFBFB), Color(0xFFC5C5C5)),
+          const SizedBox(width: 15,),
+        ],
+      ),
     );
   }
 }

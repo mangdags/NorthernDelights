@@ -20,6 +20,7 @@ class ReviewsDetails extends StatefulWidget {
 class _ReviewsDetailsState extends State<ReviewsDetails> {
   final ReviewsDocData _reviewsDocData = ReviewsDocData();
   Future<List<Map<String, dynamic>>>? initialReviewData;
+  double _overallRating = 0.0;
 
   @override
   void initState() {
@@ -32,6 +33,7 @@ class _ReviewsDetailsState extends State<ReviewsDetails> {
         .collection(widget.foodPlaceCategory)
         .doc(widget.foodPlaceID)
         .collection('reviews')
+        .orderBy('datetime', descending: true)
         .get();
 
     return querySnapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
@@ -128,12 +130,27 @@ class _ReviewsDetailsState extends State<ReviewsDetails> {
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         mainAxisAlignment: MainAxisAlignment.start,
                                         children: [
-                                          Icon(Icons.star, color: Colors.yellow.shade800, size: 20),
-                                          const SizedBox(width: 5),
                                           Text(
-                                            reviews['star'].toString(),
+                                            'Overall: ${(((reviews['foodRating'] ?? 0) + (reviews['serviceRating'] ?? 0) + (reviews['atmosphereRating'] ?? 0)) / 3).toStringAsFixed(1)}',
+
                                             style: const TextStyle(
                                               fontWeight: FontWeight.w500,
+                                              fontSize: 18,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                          Icon(Icons.star, color: Colors.yellow.shade800, size: 20),
+                                          const SizedBox(width: 5),
+                                        ],
+                                      ),
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Food: ${reviews['foodRating'].toString()}',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w400,
                                               fontSize: 14,
                                               color: Colors.black,
                                             ),
@@ -141,26 +158,65 @@ class _ReviewsDetailsState extends State<ReviewsDetails> {
                                         ],
                                       ),
 
-                                      const SizedBox(height: 5),
-                                      Container(
-                                        constraints: BoxConstraints(
-                                          maxWidth: MediaQuery.of(context).size.width * 0.78,
-                                        ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 3.0, vertical: 0.0),
-                                          child: Text(
-                                            reviews['feedback'] ?? 'No feedback',
-                                            overflow: TextOverflow.visible,
-                                            maxLines: reviews['feedback'].toString().length,
-                                            softWrap: true,
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Service: ${reviews['serviceRating'].toString()}',
                                             style: const TextStyle(
-                                              fontWeight: FontWeight.normal,
+                                              fontWeight: FontWeight.w400,
                                               fontSize: 14,
                                               color: Colors.black,
                                             ),
                                           ),
+                                        ],
+                                      ),
+
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Atmosphere: ${reviews['atmosphereRating'].toString()}',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 14,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+
+
+
+                                      const SizedBox(height: 10),
+
+
+
+                                      Text('Comment', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),),
+                                      Container(
+                                        constraints: BoxConstraints(
+                                          maxWidth: (MediaQuery.of(context).size.width * 0.78) -140,
+                                          maxHeight: 150, // set a reasonable max height for scrolling
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 3.0, vertical: 0.0),
+                                          child: SingleChildScrollView(
+                                            scrollDirection: Axis.vertical,
+                                            child: Text(
+                                              reviews['feedback'] ?? 'No feedback',
+                                              softWrap: true,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.normal,
+                                                fontSize: 14,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                          ),
                                         ),
                                       ),
+
                                     ],
                                   ),
                                 ],

@@ -288,12 +288,15 @@ class _GastropubInfoState extends State<GastropubInfo> {
         return;
       }
 
-      final starRatings = querySnapshot.docs
-          .map((doc) => doc['star'] as num)
-          .toList();
+      final starRatings = querySnapshot.docs.map((doc) {
+        final food = doc['foodRating'] ?? 0;
+        final service = doc['serviceRating'] ?? 0;
+        final atmosphere = doc['atmosphereRating'] ?? 0;
+        return (food + service + atmosphere) as num;
+      }).toList();
 
       final averageRating = starRatings.reduce((a, b) => a + b) / starRatings.length;
-      final formattedRating = double.parse(averageRating.toStringAsFixed(2));
+      final formattedRating = double.parse(averageRating.toStringAsFixed(1));
 
       await firestore
           .collection('gastropubs')

@@ -155,6 +155,32 @@ class _MenuDetailsState extends State<MenuDetails> {
                                   color: Colors.redAccent,
                                 ),
                               ),
+
+                              const SizedBox(height: 10,),
+                              const Text('Description', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400),),
+                              const SizedBox(height: 5,),
+
+                              Container(
+                                constraints: BoxConstraints(
+                                  maxWidth: (MediaQuery.of(context).size.width * 0.78) -90,
+                                  maxHeight: 150, // set a reasonable max height for scrolling
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 3.0, vertical: 0.0),
+                                  child: SingleChildScrollView(
+                                    scrollDirection: Axis.vertical,
+                                    child: Text(
+                                      menu['description'] ?? 'No description',
+                                      softWrap: true,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.normal,
+                                        fontSize: 14,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
 

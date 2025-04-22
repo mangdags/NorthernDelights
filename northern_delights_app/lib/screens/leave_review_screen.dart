@@ -31,7 +31,10 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
   final ImagePicker _imagePicker = ImagePicker();
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  double _rating = 1.0; //Default to 1
+  double _foodRating = 1.0; //Default to 1
+  double _serviceRating = 1.0;
+  double _atmosRating = 1.0;
+
   bool _isSubmitting = false;
 
   Future<void> _submitReview() async {
@@ -61,7 +64,9 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
       userName: userName,
       reviewText: _reviewController.text,
       reviewImage: _imageUrl,
-      rating: _rating,
+      foodRating: _foodRating,
+      svcRating: _serviceRating,
+      atmosRating: _atmosRating,
       dateTime: DateTime.now(),
     );
 
@@ -79,7 +84,9 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
 
       _reviewController.clear();
       setState(() {
-        _rating = 1.0;
+        _foodRating = 1.0;
+        _serviceRating = 1.0;
+        _foodRating = 1.0;
       });
 
       await updateAverageRating(widget.collectionType, widget.restaurantGastropubId);
@@ -150,58 +157,116 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _reviewController,
-              maxLines: 5,
-              decoration: const InputDecoration(
-                labelText: 'Your Review',
-                border: OutlineInputBorder(),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              TextField(
+                controller: _reviewController,
+                maxLines: 5,
+                decoration: const InputDecoration(
+                  labelText: 'Your Review',
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            GestureDetector(
-              onTap: _pickImage,
-              child: CircleAvatar(
-                radius: 30,
-                backgroundImage: _selectedImage != null
-                    ? FileImage(_selectedImage!)
-                    : (_imageUrl != null ? NetworkImage(_imageUrl!) as ImageProvider : null),
-                child: _selectedImage == null && _imageUrl == null
-                    ? const Icon(Icons.camera_alt, size: 25)
-                    : null,
+              const SizedBox(height: 16),
+              GestureDetector(
+                onTap: _pickImage,
+                child: CircleAvatar(
+                  radius: 30,
+                  backgroundImage: _selectedImage != null
+                      ? FileImage(_selectedImage!)
+                      : (_imageUrl != null ? NetworkImage(_imageUrl!) as ImageProvider : null),
+                  child: _selectedImage == null && _imageUrl == null
+                      ? const Icon(Icons.camera_alt, size: 25)
+                      : null,
+                ),
               ),
-            ),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(5, (index) {
-                return IconButton(
-                  icon: Icon(
-                    index < _rating
-                        ? Icons.star
-                        : Icons.star_border,
-                    color: Colors.amber,
+          
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Food: ', style: TextStyle(fontSize: 16),),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return IconButton(
+                        icon: Icon(
+                          index < _foodRating
+                              ? Icons.star
+                              : Icons.star_border,
+                          color: Colors.amber,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _foodRating = index + 1.0;
+                          });
+                        },
+                      );
+                    }),
                   ),
-                  onPressed: () {
-                    setState(() {
-                      _rating = index + 1.0;
-                    });
-                  },
-                );
-              }),
-            ),
-
-            const SizedBox(height: 16),
-
-            ElevatedButton(
-              onPressed: _isSubmitting ? null : _submitReview,
-              child: _isSubmitting
-                  ? const CircularProgressIndicator()
-                  : const Text('Submit Review'),
-            ),
-          ],
+                ],
+              ),
+          
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Service: ', style: TextStyle(fontSize: 16),),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return IconButton(
+                        icon: Icon(
+                          index < _serviceRating
+                              ? Icons.star
+                              : Icons.star_border,
+                          color: Colors.amber,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _serviceRating = index + 1.0;
+                          });
+                        },
+                      );
+                    }),
+                  ),
+                ],
+              ),
+          
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Atmosphere: ', style: TextStyle(fontSize: 16),),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return IconButton(
+                        icon: Icon(
+                          index < _atmosRating
+                              ? Icons.star
+                              : Icons.star_border,
+                          color: Colors.amber,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _atmosRating = index + 1.0;
+                          });
+                        },
+                      );
+                    }),
+                  ),
+                ],
+              ),
+          
+              const SizedBox(height: 16),
+          
+              ElevatedButton(
+                onPressed: _isSubmitting ? null : _submitReview,
+                child: _isSubmitting
+                    ? const CircularProgressIndicator()
+                    : const Text('Submit Review'),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -22,7 +22,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
   List<Map<String, dynamic>> menuItems = [];
-  //String? collectionType;
+  String? collectionType;
   String? _imageName;
   late String _storeName;
   late String _storeType;
@@ -32,6 +32,10 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   bool isUploading = false;
 
   final ImagePicker _imagePicker = ImagePicker();
+
+
+  final TextEditingController _descController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -60,11 +64,6 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       setState(() {
         collectionType = 'restaurants';
         menuItems = restaurantData ?? [];
-      }) ;
-    }
-
-    print('Collection Type: $collectionType, $_storeType');
-        menuItems = gastropubData ?? [];
       });
     } else if (_storeType == 'restaurants') {
       setState(() {
@@ -135,7 +134,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   }
 
 
-  Future<void> _addMenuItem(String name, double price) async
+  Future<void> _addMenuItem(String name, double price, String description) async
   {
     if (_selectedImage != null) {
       final fileSize = await _selectedImage?.length();
@@ -147,18 +146,16 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       }
       if(_storeType == 'gastropubs')
       {
-        print('COLLECTION: Gastropub');
-        await _addMenuOnCollection(FirebaseFirestore.instance.collection('gastropubs'), name, price);
+        await _addMenuOnCollection(FirebaseFirestore.instance.collection('gastropubs'), name, price, description);
 
       } else if(_storeType == 'restaurants') {
-        print('COLLECTION: Restaurant');
-        await _addMenuOnCollection(FirebaseFirestore.instance.collection('restaurants'), name, price);
+        await _addMenuOnCollection(FirebaseFirestore.instance.collection('restaurants'), name, price, description);
       }
 
     }
   }
 
-  Future<void> _addMenuOnCollection(CollectionReference<Map<String, dynamic>> collectionRef, String name, double price) async
+  Future<void> _addMenuOnCollection(CollectionReference<Map<String, dynamic>> collectionRef, String name, double price, String description) async
   {
     final docRef = await collectionRef.doc(widget.userId);
     final docSnapshot = await docRef.get();
@@ -168,7 +165,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       final menuCollectionRef = collectionRef.doc(docId).collection('menu');
 
       // Add item and get its document reference
-      final newMenuItemRef = await menuCollectionRef.add({'name': name, 'price': price, 'photo': ''});
+      final newMenuItemRef = await menuCollectionRef.add({'name': name, 'price': price, 'photo': '', 'description': description});
       final menuItemId = newMenuItemRef.id;
 
       await _uploadImage(menuItemId);
@@ -186,7 +183,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   }
 
 
-  Future<void> _updateMenuItem(String itemId, String name, double price) async
+  Future<void> _updateMenuItem(String itemId, String name, double price, String description) async
   {
     final collectionRef = FirebaseFirestore.instance.collection(_storeType);
     final docRef = await collectionRef.doc(widget.userId);
@@ -195,7 +192,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     if (docSnapshot.exists) {
       final docId = docSnapshot.id;
       final menuItemRef = collectionRef.doc(docId).collection('menu').doc(itemId);
-      await menuItemRef.update({'name': name, 'price': price});
+      await menuItemRef.update({'name': name, 'price': price, 'description': description});
 
       _fetchMenuData();
     }
@@ -248,11 +245,17 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
               },
             ),
           ),
-          ElevatedButton(
-            onPressed: () => _showAddDialog(),
-            child: const Text("Add Menu Item"),
-          ),
+          // ElevatedButton(
+          //   onPressed: () => _showAddDialog(),
+          //   child: const Text("Add Menu Item"),
+          //),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _showAddDialog();
+        },
+        child: const Icon(Icons.add),
       ),
     );
   }
@@ -260,6 +263,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   void _showAddDialog() {
     _imageName = '';
     double price = 0.0;
+    String description = '';
 
     showDialog(
       context: context,
@@ -278,7 +282,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                     },
                     child: CircleAvatar(
                       key: ValueKey(_selectedImage?.path),
-                      radius: 60,
+                      radius: 25,
                       backgroundImage: _selectedImage != null
                           ? FileImage(_selectedImage!)
                           : (_imageURL != null ? NetworkImage(_imageURL!) : null),
@@ -296,6 +300,30 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                     keyboardType: TextInputType.number,
                     onChanged: (value) => price = double.tryParse(value) ?? 0.0,
                   ),
+
+                  Container(
+                    height: 150, // Set a fixed height to enable scrolling
+                    padding: EdgeInsets.all(8),
+                    child: Scrollbar(
+                      thumbVisibility: true,
+                      controller: _scrollController,
+                      child: SingleChildScrollView(
+                        controller: _scrollController,
+                        child: TextField(
+                          controller: _descController,
+                          keyboardType: TextInputType.multiline,
+                          maxLines: null,
+                          minLines: 5,
+                          onChanged: (value) => description = value,
+                          decoration: InputDecoration(
+                            labelText: "Description",
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+
                 ],
               ),
               actions: [
@@ -309,7 +337,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                   onPressed: isUploading
                       ? null
                       : (){
-                        _addMenuItem(_imageName!, price);
+                        _addMenuItem(_imageName!, price, description);
                         Navigator.of(context).pop();
                       },
                   child: isUploading
@@ -380,6 +408,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   void _showEditDialog(Map<String, dynamic> menuItem) {
     _imageName = menuItem['name'] ?? 'No Item Name';
     double price = menuItem['price'] ?? 0.00;
+    String description = menuItem['description'] ?? '';
 
     showDialog(
       context: context,
@@ -400,6 +429,29 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                 onChanged: (value) => price = double.tryParse(value) ?? price,
                 controller: TextEditingController(text: price.toString()),
               ),
+
+              Container(
+                height: 150, // Set a fixed height to enable scrolling
+                padding: EdgeInsets.all(8),
+                child: Scrollbar(
+                  thumbVisibility: true,
+                  controller: _scrollController,
+                  child: SingleChildScrollView(
+                    controller: _scrollController,
+                    child: TextField(
+                      controller: _descController,
+                      keyboardType: TextInputType.multiline,
+                      maxLines: null,
+                      minLines: 5,
+                      onChanged: (value) => description = value,
+                      decoration: InputDecoration(
+                        labelText: "Description",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ),
+              )
             ],
           ),
           actions: [
@@ -411,7 +463,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
             ),
             ElevatedButton(
               onPressed: () {
-                _updateMenuItem(menuItem['id'], _imageName!, price);
+                _updateMenuItem(menuItem['id'], _imageName!, price, description);
                 Navigator.of(context).pop();
               },
               child: Text("Save"),

@@ -172,28 +172,37 @@ class _HomeScreenState extends State<HomeScreen> {
                   selectedCategory: _selectedCategory,
                 ),
                 const SizedBox(height: 20),
-                const Text('Gastropubs',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.w700,
-                    )),
+                Offstage(
+                  offstage: (_selectedCategory == 'Empanada' || _selectedCategory == 'Sinanglao'),
+                  child: const Text('Gastropubs',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontFamily: 'Roboto',
+                        fontWeight: FontWeight.w700,
+                      )),
+                ),
                 const SizedBox(height: 20),
                 SizedBox(
                   height: 320,
                   child: GastropubCards(isRegular: !isSeller, isAdmin: isAdmin, selectedCategory: _selectedCategory),
                 ),
                 SizedBox(height: 5),
-                Text('Restaurants',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.w700,
-                    )),
+                Offstage(
+                  offstage: (_selectedCategory == 'Empanada' || _selectedCategory == 'Sinanglao'),
+                  child: Text('Restaurants',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontFamily: 'Roboto',
+                        fontWeight: FontWeight.w700,
+                      )),
+                ),
                 const SizedBox(height: 10),
-                SizedBox(
-                  height: 320,
-                  child: RestaurantsCard(isRegular: !isSeller, isAdmin: isAdmin, selectedCategory: _selectedCategory),
+                Offstage(
+                  offstage: (_selectedCategory == 'Empanada' || _selectedCategory == 'Sinanglao'),
+                  child: SizedBox(
+                    height: 320,
+                    child: RestaurantsCard(isRegular: !isSeller, isAdmin: isAdmin, selectedCategory: _selectedCategory),
+                  ),
                 ),
               ],
             ),

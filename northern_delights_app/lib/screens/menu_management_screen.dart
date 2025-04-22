@@ -45,19 +45,21 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     final gastropubData = await _getCollectionData('gastropubs');
     final restaurantData = await _getCollectionData('restaurants');
 
-    if(gastropubData != null) {
+    if(_storeType == 'gastropubs') {
       setState(() {
         collectionType = 'gastropubs';
-        menuItems = gastropubData!;
-      });
-    } else if (restaurantData != null) {
-      setState(() {
-        collectionType = 'restaurants';
-        menuItems = restaurantData!;
+        menuItems = gastropubData ?? [];
       });
     }
 
-    print('Collection Type: $collectionType');
+    if (_storeType == 'restaurants') {
+      setState(() {
+        collectionType = 'restaurants';
+        menuItems = restaurantData ?? [];
+      }) ;
+    }
+
+    print('Collection Type: $collectionType, $_storeType');
   }
 
   Future<void> _initializeShop() async{

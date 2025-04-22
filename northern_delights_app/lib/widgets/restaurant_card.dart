@@ -10,10 +10,11 @@ class RestaurantsCard extends StatefulWidget {
   final String? searchKeyword; // New optional parameter for search keyword
   final Map<String, dynamic>? restoData;
   final bool isRegular;
+  final bool isAdmin;
 
   const RestaurantsCard({super.key, required this.selectedCategory, this.searchKeyword,
     this.restoData,
-    required this.isRegular});
+    required this.isRegular, required this.isAdmin});
 
   @override
   _RestaurantsCardState createState() => _RestaurantsCardState();
@@ -83,6 +84,7 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
                     MaterialPageRoute(
                       builder: (context) => RestaurantInfo(
                         isRegular: widget.isRegular,
+                        isAdmin: widget.isAdmin,
                         restaurantID: resto['id'],
                       ),
                     ),
@@ -107,7 +109,9 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(20),
-                            child: Image.network(
+                            child: resto['image_url'] != null && resto['image_url'].toString().isNotEmpty
+                            ?
+                            Image.network(
                               resto['image_url'],
                               fit: BoxFit.cover,
                               width: 220,
@@ -124,7 +128,13 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
                                   ),
                                 );
                               },
-                            ),
+                            )
+                                :
+                            Image.asset(
+                              'assets/images/store.png',
+                              fit: BoxFit.contain,
+                              width: 220,
+                              height: 300,),
                           ),
                         ),
 

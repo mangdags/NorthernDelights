@@ -160,8 +160,9 @@ class _MenuDetailsState extends State<MenuDetails> {
 
                           const Spacer(), // Pushes the image to the far right
                           // Image
-                          Image.network(
-                            menu['photo'] ?? 'assets/images/meal-menu.png',
+                          menu['photo'] != null && menu['photo'].toString().isNotEmpty
+                          ? Image.network(
+                            menu['photo'],
                             fit: BoxFit.contain,
                             alignment: Alignment.center,
                             width: 100,
@@ -176,7 +177,8 @@ class _MenuDetailsState extends State<MenuDetails> {
                                 ),
                               );
                             },
-                          ),
+                          ) 
+                              : Image.asset('assets/images/meal-menu.png', fit: BoxFit.contain, width: 60, height: 60,),
                         ],
                       ),
                     ),

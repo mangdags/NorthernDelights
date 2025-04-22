@@ -8,10 +8,11 @@ import 'package:northern_delights_app/screens/restaurant_info_screen.dart';
 class RestaurantsCardSearch extends StatefulWidget {
   final String? searchKeyword;
   final bool isRegular;
+  final bool isAdmin;
 
   const RestaurantsCardSearch({super.key, //required this.selectedCategory,
     this.searchKeyword,
-    required this.isRegular});
+    required this.isRegular, required this.isAdmin});
 
   @override
   _RestaurantsCardSearchState createState() => _RestaurantsCardSearchState();
@@ -81,6 +82,7 @@ class _RestaurantsCardSearchState extends State<RestaurantsCardSearch> {
                     MaterialPageRoute(
                       builder: (context) => RestaurantInfo(
                         isRegular: widget.isRegular,
+                        isAdmin: widget.isAdmin,
                         restaurantID: resto['id'],
                       ),
                     ),

@@ -38,6 +38,7 @@ class _EstablishmentsMapState extends State<EstablishmentsMap> {
       return Marker(
         markerId: MarkerId(doc.id),
         position: LatLng(geoPoint.latitude, geoPoint.longitude),
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
         infoWindow: InfoWindow(
           title: name,
           snippet: 'Tap for details',
@@ -66,6 +67,7 @@ class _EstablishmentsMapState extends State<EstablishmentsMap> {
       return Marker(
         markerId: MarkerId(doc.id),
         position: LatLng(geoPoint.latitude, geoPoint.longitude),
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
         infoWindow: InfoWindow(
           title: name,
           snippet: 'Tap for details',
@@ -149,28 +151,117 @@ class _EstablishmentsMapState extends State<EstablishmentsMap> {
     }
   }
 
+  Widget _legendItem(Color color, String label) {
+    return Row(
+      children: [
+        Icon(Icons.place, color: color, size: 20),
+        SizedBox(width: 6),
+        Text(label, style: TextStyle(fontSize: 13)),
+      ],
+    );
+  }
+
+  void _searchEstablishment(String query) {
+    final foundMarker = _markers.firstWhere(
+          (marker) => marker.infoWindow.title!.toLowerCase().contains(query.toLowerCase()),
+      orElse: () => Marker(markerId: MarkerId('not_found')),
+    );
+
+    if (foundMarker.markerId.value != 'not_found') {
+      _mapController?.animateCamera(
+        CameraUpdate.newLatLng(foundMarker.position),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Vigan Delights')),
       body: _currentLocation == null
           ? Center(child: CircularProgressIndicator())
-          : GoogleMap(
-        initialCameraPosition: CameraPosition(
-          target: _currentLocation!,
-          zoom: 14,
-        ),
-        onMapCreated: (controller) {
-          _mapController = controller;
-          if (_currentLocation != null) {
-            _mapController!.animateCamera(
-              CameraUpdate.newLatLngZoom(_currentLocation!, 14),
-            );
-          }
-        },
-        markers: _markers,
-        myLocationEnabled: true,
-        myLocationButtonEnabled: true,
+          : Stack(
+        children: [
+          // Google Map as the background
+          Positioned.fill(
+            child: GoogleMap(
+              initialCameraPosition: CameraPosition(
+                target: _currentLocation!,
+                zoom: 14,
+              ),
+              onMapCreated: (controller) {
+                _mapController = controller;
+                _mapController!.animateCamera(
+                  CameraUpdate.newLatLngZoom(_currentLocation!, 14),
+                );
+              },
+              markers: _markers,
+              myLocationEnabled: true,
+              myLocationButtonEnabled: true,
+              mapToolbarEnabled: false, // ← Optional: hides the default share/directions icons
+            ),
+          ),
+
+          // Search Bar on top
+          Positioned(
+            top: 20,
+            left: 20,
+            right: 20,
+            child: Material(
+              elevation: 4,
+              borderRadius: BorderRadius.circular(12),
+              child: TextField(
+                onChanged: _searchEstablishment,
+                decoration: InputDecoration(
+                  hintText: 'Search establishments...',
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                ),
+              ),
+            ),
+          ),
+
+          // Legend at the bottom left
+          Positioned(
+            bottom: 20,
+            left: 20,
+            child: Container(
+              padding: EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 6,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    'Store Legend',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 6),
+                  _legendItem(Colors.red, 'Gastropubs'),
+                  SizedBox(height: 4),
+                  _legendItem(Colors.blue, 'Restaurants'),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

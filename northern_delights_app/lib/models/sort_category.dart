@@ -28,7 +28,7 @@ class _CategorizedScreenState extends State<CategorizedScreen> {
         CategoryButton(onCategorySelected: _onCategorySelected, selectedCategory: _selectedCategory),
 
         Expanded(
-          child: GastropubCards(isRegular: true, selectedCategory: _selectedCategory),
+          child: GastropubCards(isRegular: true, isAdmin: false, selectedCategory: _selectedCategory),
         ),
       ],
     );

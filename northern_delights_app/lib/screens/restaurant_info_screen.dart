@@ -22,11 +22,13 @@ class RestaurantInfo extends StatefulWidget {
   const RestaurantInfo({
     required this.restaurantID,
     required this.isRegular,
+    required this.isAdmin,
     super.key,
   });
 
   final String restaurantID;
   final bool isRegular;
+  final bool isAdmin;
 
   @override
   _RestaurantInfoState createState() => _RestaurantInfoState();
@@ -404,7 +406,10 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(20),
-                    child: Image.network(
+                    child:
+                    resto['image_url'] != null && resto['image_url'].toString().isNotEmpty
+                    ?
+                    Image.network(
                       resto['image_url'],
                       fit: BoxFit.cover,
                       width: 220,
@@ -419,7 +424,13 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                           ),
                         );
                       },
-                    ),
+                    )
+                        :
+                    Image.asset(
+                      'assets/images/store.png',
+                      fit: BoxFit.contain,
+                      width: 220,
+                      height: 350,)
                   ),
                 ),
 

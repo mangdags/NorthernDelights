@@ -8,8 +8,9 @@ import 'package:northern_delights_app/screens/gastropub_info_screen.dart';
 class GastropubCards extends StatefulWidget {
     final String selectedCategory;
     final bool isRegular;
+    final bool isAdmin;
 
-    const GastropubCards({super.key, required this.selectedCategory, required this.isRegular});
+    const GastropubCards({super.key, required this.selectedCategory, required this.isRegular, required this.isAdmin});
 
     @override
     _GastropubCardsState createState() => _GastropubCardsState();
@@ -89,6 +90,7 @@ class _GastropubCardsState extends State<GastropubCards> {
                                         MaterialPageRoute(
                                             builder: (context) => GastropubInfo(
                                                 isRegular: widget.isRegular,
+                                                isAdmin: widget.isAdmin,
                                                 gastropubID: gastropub['id'],
 
                                             ),
@@ -114,7 +116,10 @@ class _GastropubCardsState extends State<GastropubCards> {
                                                     ),
                                                     child: ClipRRect(
                                                         borderRadius: BorderRadius.circular(20),
-                                                        child: Image.network(
+                                                        child:
+                                                        gastropub['image_url'] != null && gastropub['image_url'].toString().isNotEmpty
+                                                        ?
+                                                        Image.network(
                                                             gastropub['image_url'],
                                                             fit: BoxFit.cover,
                                                             width: 220,
@@ -131,7 +136,13 @@ class _GastropubCardsState extends State<GastropubCards> {
                                                                     ),
                                                                 );
                                                             },
-                                                        ),
+                                                        )
+                                                            :
+                                                        Image.asset(
+                                                            'assets/images/store.png',
+                                                            fit: BoxFit.contain,
+                                                            width: 220,
+                                                            height: 300,),
                                                     ),
                                                 ),
 

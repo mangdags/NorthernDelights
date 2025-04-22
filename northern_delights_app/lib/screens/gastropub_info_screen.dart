@@ -21,11 +21,13 @@ class GastropubInfo extends StatefulWidget {
   const GastropubInfo({
     required this.gastropubID,
     required this.isRegular,
+    required this.isAdmin,
     super.key,
   });
 
   final String gastropubID;
   final bool isRegular;
+  final bool isAdmin;
 
   @override
   _GastropubInfoState createState() => _GastropubInfoState();
@@ -75,7 +77,6 @@ class _GastropubInfoState extends State<GastropubInfo> {
       });
     });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -147,7 +148,7 @@ class _GastropubInfoState extends State<GastropubInfo> {
                     if (selectedTab == Tab.Menu) _menuDetails(),
                     if (selectedTab == Tab.Review) ... [
                       _reviewDetails(),
-                      if(widget.isRegular) ... [
+                      if(widget.isRegular && !widget.isAdmin) ... [
                         const SizedBox(height: 20,),
 
                         ElevatedButton(onPressed: () => Navigator.push(
@@ -407,7 +408,9 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(20),
-                    child: Image.network(
+                    child:
+                    gastro['image_url'] != null && gastro['image_url'].toString().isNotEmpty
+                    ? Image.network(
                       gastro['image_url'],
                       fit: BoxFit.cover,
                       width: 220,
@@ -422,7 +425,13 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                           ),
                         );
                       },
-                    ),
+                    )
+                        :
+                        Image.asset(
+                          'assets/images/store.png',
+                          fit: BoxFit.contain,
+                          width: 220,
+                          height: 350,)
                   ),
                 ),
           

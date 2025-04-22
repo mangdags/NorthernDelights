@@ -146,6 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: RestaurantsCardSearch(
                       searchKeyword: _searchKeyword,
                       isRegular: true,
+                      isAdmin: false,
                     ),
                   );
                 },
@@ -156,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 builder: (context, snapshot) {
                   return Offstage(
                     offstage: !(snapshot.hasData && snapshot.data!),
-                    child: GastropubCardSearch(searchKeyword: _searchKeyword, isRegular: true),
+                    child: GastropubCardSearch(searchKeyword: _searchKeyword, isRegular: true, isAdmin: false,),
                   );
                 },
               )
@@ -180,7 +181,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 20),
                 SizedBox(
                   height: 320,
-                  child: GastropubCards(isRegular: !isSeller, selectedCategory: _selectedCategory),
+                  child: GastropubCards(isRegular: !isSeller, isAdmin: isAdmin, selectedCategory: _selectedCategory),
                 ),
                 SizedBox(height: 5),
                 Text('Restaurants',
@@ -192,7 +193,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 10),
                 SizedBox(
                   height: 320,
-                  child: RestaurantsCard(isRegular: !isSeller, selectedCategory: _selectedCategory),
+                  child: RestaurantsCard(isRegular: !isSeller, isAdmin: isAdmin, selectedCategory: _selectedCategory),
                 ),
               ],
             ),

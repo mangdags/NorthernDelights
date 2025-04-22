@@ -8,8 +8,9 @@ import 'package:northern_delights_app/screens/gastropub_info_screen.dart';
 class GastropubCardSearch extends StatefulWidget {
   final String? searchKeyword;
   final bool isRegular;
+  final bool isAdmin;
 
-  const GastropubCardSearch({super.key, required this.searchKeyword, required this.isRegular});
+  const GastropubCardSearch({super.key, required this.searchKeyword, required this.isRegular, required this.isAdmin});
 
   @override
   _GastropubCardSearchState createState() => _GastropubCardSearchState();
@@ -80,6 +81,7 @@ class _GastropubCardSearchState extends State<GastropubCardSearch> {
                     MaterialPageRoute(
                       builder: (context) => GastropubInfo(
                         isRegular: widget.isRegular,
+                        isAdmin: widget.isAdmin,
                         gastropubID: gastropub['id'],
 
                       ),

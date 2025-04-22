@@ -14,9 +14,11 @@ class SigninScreen extends StatefulWidget {
 class _SigninScreenState extends State<SigninScreen> {
   final _auth = FirebaseAuth.instance;
   late String email;
-  late String password;
+  late String password = "";
   late bool isEmailVerified = true;
   late bool isCredentialsCorrect = true;
+  bool _obscurePassword = true;
+  bool _isPasswordEmpty = false;
 
   void showEmailVerificationDialog(BuildContext context) {
     showDialog(
@@ -106,11 +108,21 @@ class _SigninScreenState extends State<SigninScreen> {
                   onChanged: (value){
                     password = value;
                   },
-                  obscureText: true,
+                  obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     hintText: 'Password',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.all(Radius.circular(10)),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
                     ),
                   ),
                 ),
@@ -141,10 +153,16 @@ class _SigninScreenState extends State<SigninScreen> {
                     }
                   } catch (e)
                   {
-                    isCredentialsCorrect = false;
-
                     setState(() {
-                      isCredentialsCorrect;
+                      if(!password.isNotEmpty)
+                      {
+                        _isPasswordEmpty = true;
+                      }
+                      else
+                      {
+                        isCredentialsCorrect = false;
+                        _isPasswordEmpty = false;
+                      }
                     });
                   }
                 },
@@ -165,6 +183,14 @@ class _SigninScreenState extends State<SigninScreen> {
               Visibility(
                 visible: !isCredentialsCorrect,
                 child: Text('Invalid credentials, please try again!',
+                  style: TextStyle(
+                    color: Colors.red,
+                  ),
+                ),
+              ),
+              Visibility(
+                visible: _isPasswordEmpty,
+                child: Text('Please input password first!',
                   style: TextStyle(
                     color: Colors.red,
                   ),

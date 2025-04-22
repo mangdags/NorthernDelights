@@ -94,8 +94,9 @@ class _ReviewsDetailsState extends State<ReviewsDetails> {
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Image.network(
-                                    reviews['reviewimage'] ?? 'assets/images/placeholder.png',
+                                  reviews['reviewimage'] != null && reviews['reviewimage'].toString().isNotEmpty
+                                  ? Image.network(
+                                    reviews['reviewimage'],
                                     fit: BoxFit.contain,
                                     alignment: Alignment.center,
                                     width: 150,
@@ -110,6 +111,13 @@ class _ReviewsDetailsState extends State<ReviewsDetails> {
                                         ),
                                       );
                                     },
+                                  )
+                                  : Image.asset(
+                                    'assets/images/review.png',
+                                    fit: BoxFit.contain,
+                                    alignment: Alignment.center,
+                                    width: 60,
+                                    height: 60,
                                   ),
                                   const SizedBox(width: 15,),
                                   Column(

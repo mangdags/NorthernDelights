@@ -22,10 +22,10 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
   List<Map<String, dynamic>> menuItems = [];
-  String? collectionType;
+  //String? collectionType;
   String? _imageName;
-  String? _storeName;
-  String? _storeType;
+  late String _storeName;
+  late String _storeType;
 
   File? _selectedImage;
   String? _imageURL;
@@ -36,9 +36,13 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   @override
   void initState() {
     super.initState();
-    _initializeUser();
-    _fetchMenuData();
-    _initializeShop();
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    await _initializeUser();
+    await _initializeShop();
+    await _fetchMenuData();
   }
 
   Future<void> _fetchMenuData() async {
@@ -60,19 +64,30 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     }
 
     print('Collection Type: $collectionType, $_storeType');
+        menuItems = gastropubData ?? [];
+      });
+    } else if (_storeType == 'restaurants') {
+      setState(() {
+        menuItems = restaurantData ?? [];
+      });
+    }
+
   }
 
   Future<void> _initializeShop() async{
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection(collectionType!).doc(widget.userId)
+      final doc = await FirebaseFirestore.instance
+          .collection(_storeType)
+          .doc(widget.userId)
           .get();
 
-      if (snapshot.exists) {
-        _storeName = snapshot.data()?['name'];
+      if (doc.exists) {
+        setState(() {
+          _storeName = doc['name'];
+        });
       }
     } catch (e) {
-      print('Error initializing $collectionType! data: $e');
+      print('Error initializing $_storeType! data: $e');
     }
   }
 
@@ -83,7 +98,9 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
           .get();
 
       if (snapshot.exists) {
-        _storeType = snapshot.data()?['store_type'];
+        setState(() {
+          _storeType = snapshot.data()?['store_type'];
+        });
       }
     } catch (e) {
       print('Error initializing user data: $e');
@@ -104,8 +121,6 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
             .collection('menu')
             .get();
 
-        _storeName = snapshot.data()?['name'];
-
         // Include 'id' in each menu item for future reference
         return menuSnapshot.docs.map((doc) {
           final data = doc.data() as Map<String, dynamic>;
@@ -122,9 +137,6 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
 
   Future<void> _addMenuItem(String name, double price) async
   {
-    print('Adding menu item: $name, $price, $collectionType');
-    if (collectionType == null) return;
-
     if (_selectedImage != null) {
       final fileSize = await _selectedImage?.length();
       if(fileSize! > 3000000) {
@@ -133,12 +145,12 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
         );
         return;
       }
-      if(collectionType == 'gastropubs')
+      if(_storeType == 'gastropubs')
       {
         print('COLLECTION: Gastropub');
         await _addMenuOnCollection(FirebaseFirestore.instance.collection('gastropubs'), name, price);
 
-      } else if(collectionType == 'restaurants') {
+      } else if(_storeType == 'restaurants') {
         print('COLLECTION: Restaurant');
         await _addMenuOnCollection(FirebaseFirestore.instance.collection('restaurants'), name, price);
       }
@@ -166,17 +178,17 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     _fetchMenuData();
 
     // Add keywords for searching
-    if(collectionType == 'restaurants') {
-      updateKeywordsResto(widget.userId, _storeName!, await fetchMenuKeywordsResto(widget.userId));
-    } else if(collectionType == 'gastropubs') {
-      updateKeywordsGastro(widget.userId, _storeName!, await fetchMenuKeywordsGastro(widget.userId));
+    if(_storeType == 'restaurants') {
+      updateKeywordsResto(widget.userId, _storeName, await fetchMenuKeywordsResto(widget.userId));
+    } else if(_storeType == 'gastropubs') {
+      updateKeywordsGastro(widget.userId, _storeName, await fetchMenuKeywordsGastro(widget.userId));
     }
   }
 
 
   Future<void> _updateMenuItem(String itemId, String name, double price) async
   {
-    final collectionRef = FirebaseFirestore.instance.collection(collectionType!);
+    final collectionRef = FirebaseFirestore.instance.collection(_storeType);
     final docRef = await collectionRef.doc(widget.userId);
     final docSnapshot = await docRef.get();
 
@@ -190,9 +202,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   }
 
   Future<void> _deleteMenuItem(String itemId) async {
-    if (collectionType == null) return;
-
-    final collectionRef = FirebaseFirestore.instance.collection(collectionType!);
+    final collectionRef = FirebaseFirestore.instance.collection(_storeType);
     final docRef = await collectionRef.doc(widget.userId);
     final docSnapshot = await docRef.get();
 
@@ -336,7 +346,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     try {
       // Upload Image
       final fileName = '$_imageName.png';
-      final storageRef = _storage.ref().child('$collectionType/menu/$_storeName/$fileName');
+      final storageRef = _storage.ref().child('$_storeType/menu/$_storeName/$fileName');
 
       final uploadTask = await storageRef.putFile(_selectedImage!);
       final imageUrl = await uploadTask.ref.getDownloadURL();
@@ -346,7 +356,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       });
 
       await _firestore
-        .collection(collectionType!)
+        .collection(_storeType)
         .doc(widget.userId)
         .collection('menu')
         .doc(menuItemId)

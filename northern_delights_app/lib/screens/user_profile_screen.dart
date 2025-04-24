@@ -3,9 +3,15 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:northern_delights_app/screens/home_screen.dart';
 import 'package:northern_delights_app/screens/pin_location_screen.dart';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+
+
 
 class UserProfileScreen extends StatefulWidget {
   final String userId;
@@ -41,7 +47,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   late bool isSeller;
   bool isLoading = true;
 
-  File? _selectedImage;
+  List<File> _selectedImages = [];
+
   String? _imageUrl;
   bool isUploading = false;
 
@@ -145,8 +152,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         });
 
 
-        await _uploadImage('restaurants', '${widget.userId}.png');
-        await _uploadImage('gastropubs', '${widget.userId}.png');
+        // await _uploadImage('restaurants', '${widget.userId}.png');
+        // await _uploadImage('gastropubs', '${widget.userId}.png');
+        await _uploadImages('restaurants');
+        await _uploadImages('gastropubs');
 
       } else {
         await FirebaseFirestore.instance.collection(type).doc(widget.userId).update({
@@ -158,7 +167,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           //'geopoint' : GeoPoint(latitude!, longitude!),
         });
 
-        _uploadImage(storeType, '${widget.userId}.png');
+        // _uploadImage(storeType, '${widget.userId}.png');
+        await _uploadImages(storeType);
+
       }
 
       // if (!latitude.isNaN && !longitude.isNaN) {
@@ -176,7 +187,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         'last_name': lastNameController.text,
       });
 
-      await _uploadImage('users', '${widget.userId}.png');
+      // await _uploadImage('users', '${widget.userId}.png');
+      await _uploadImages('users');
     }
 
     if(!isUploading){
@@ -250,57 +262,94 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     return '$hours:${minutes.toString().padLeft(2, '0')} $period';
   }
 
-  Future<void> _pickImage() async {
-    final pickedFile = await _imagePicker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      final fileSize = await pickedFile.length();
-      if(fileSize > 3000000) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Image size exceeds 3MB')),
-        );
-        return;
+  Future<void> _pickImages() async {
+    final pickedFiles = await _imagePicker.pickMultiImage();
+
+    if (pickedFiles.isNotEmpty) {
+      List<File> validFiles = [];
+
+      for (var xFile in pickedFiles) {
+        // Convert XFile to File
+        File file = File(xFile.path);
+
+        // Check the file size
+        final fileSize = await file.length();
+        if (fileSize <= 3000000) { // 3MB
+          validFiles.add(file);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('One or more images exceed 3MB and were skipped.')),
+          );
+        }
       }
+
       setState(() {
-        _selectedImage = File(pickedFile.path);
+        _selectedImages = validFiles;
       });
     }
   }
 
 
-  Future<void> _uploadImage(String _storeType, String imageFile) async {
-    if (_selectedImage == null || isUploading) return;
+
+
+  Future<void> _uploadImages(String storeType) async {
+    if (_selectedImages.isEmpty || isUploading) return;
 
     setState(() {
       isUploading = true;
     });
 
-    final storageRef = _storage.ref().child('$_storeType/$imageFile');
-
     try {
-      final uploadTask = await storageRef.putFile(_selectedImage!);
-      final imageUrl = await uploadTask.ref.getDownloadURL();
+      List<String> uploadedUrls = [];
 
-      setState(() {
-        _imageUrl = imageUrl;
-      });
+      for (int i = 0; i < _selectedImages.length; i++) {
+        final folder = widget.userId;
+        final originalFile = File(_selectedImages[i].path); // ✅ Convert XFile to File
+        final fileName = '${widget.userId}_$i.jpg';
+        final storageRef = _storage.ref().child('$storeType/$folder/$fileName');
 
-      await _firestore.collection(_storeType).doc(widget.userId).update({
-        'image_url': _imageUrl,
+        // Compress image
+        final dir = await getTemporaryDirectory();
+        final targetPath = path.join(dir.absolute.path, 'temp_$fileName');
+
+        final compressedFile = await FlutterImageCompress.compressAndGetFile(
+          originalFile.path,
+          targetPath,
+          quality: 80,
+          format: CompressFormat.jpeg,
+        );
+
+        if (compressedFile == null) {
+          throw Exception('Failed to compress image $i');
+        }
+
+        // Use File() to ensure the correct type is passed to putFile
+        final uploadTask = await storageRef.putFile(File(compressedFile.path));
+        final imageUrl = await uploadTask.ref.getDownloadURL();
+        uploadedUrls.add(imageUrl);
+      }
+
+      // Save URLs to Firestore
+      await _firestore.collection('users').doc(widget.userId).update({
+        'image_urls': uploadedUrls,
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile updated successfully!')),
+        const SnackBar(content: Text('Images uploaded successfully!')),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Image upload failed: $e')),
       );
-    } finally{
+    } finally {
       setState(() {
         isUploading = false;
       });
     }
   }
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -314,27 +363,47 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           child: Column(
             children: [
               // Profile Image
-              if(_imageUrl != null)
-                GestureDetector(
-                  onTap: _pickImage,
-                  child: CircleAvatar(
-                    radius: 60,
-                    backgroundImage: NetworkImage(_imageUrl!),
-                  ),
-                )
-              else
-              GestureDetector(
-                onTap: _pickImage,
-                child: CircleAvatar(
-                  radius: 60,
-                  backgroundImage: _selectedImage != null
-                      ? FileImage(_selectedImage!)
-                      : (_imageUrl != null ? NetworkImage(_imageUrl!) as ImageProvider : null),
-                  child: _selectedImage == null && _imageUrl == null
-                      ? const Icon(Icons.camera_alt, size: 40)
-                      : null,
+              // if(_imageUrl != null)
+              //   GestureDetector(
+              //     onTap: _pickImage,
+              //     child: CircleAvatar(
+              //       radius: 60,
+              //       backgroundImage: NetworkImage(_imageUrl!),
+              //     ),
+              //   )
+              //
+              //
+              // else
+              // GestureDetector(
+              //   onTap: _pickImage,
+              //   child: CircleAvatar(
+              //     radius: 60,
+              //     backgroundImage: _selectedImage != null
+              //         ? FileImage(_selectedImage!)
+              //         : (_imageUrl != null ? NetworkImage(_imageUrl!) as ImageProvider : null),
+              //     child: _selectedImage == null && _imageUrl == null
+              //         ? const Icon(Icons.camera_alt, size: 40)
+              //         : null,
+              //   ),
+              // ),
+              SizedBox(
+                height: 100,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _selectedImages.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Image.file(_selectedImages[index]),
+                    );
+                  },
                 ),
               ),
+              TextButton(
+                onPressed: _pickImages,
+                child: const Text("Select Images"),
+              ),
+
               const SizedBox(height: 20),  // Space below the image
               Offstage(
                 offstage: isSeller,

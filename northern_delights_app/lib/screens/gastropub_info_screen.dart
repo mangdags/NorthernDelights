@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -387,7 +388,6 @@ class FoodPlaceInfoWidget extends StatelessWidget {
         openTimeOfDay = convertToTimeOfDay(openingTime);
         closeTimeOfDay = convertToTimeOfDay(closingTime);
 
-
         GeoPoint geoPoint = gastro['geopoint'];
         double lat = geoPoint.latitude;
         double long = geoPoint.longitude;
@@ -419,30 +419,52 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(20),
-                    child:
-                    gastro['image_url'] != null && gastro['image_url'].toString().isNotEmpty
-                    ? Image.network(
-                      gastro['image_url'],
-                      fit: BoxFit.cover,
-                      width: 220,
-                      height: 350,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          alignment: Alignment.center,
-                          child: const Icon(
-                            Icons.error, // Fallback if the image can't load
-                            size: 220,
-                            color: Colors.red,
-                          ),
-                        );
+                    child: FutureBuilder<DocumentSnapshot>(
+                      future: FirebaseFirestore.instance.collection('users').doc(gastroID).get(),
+                      builder: (context, userSnapshot) {
+                        if (!userSnapshot.hasData) {
+                          return Center(child: CircularProgressIndicator());
+                        }
+
+                        final userData = userSnapshot.data!.data() as Map<String, dynamic>;
+                        final imageUrls = userData['image_urls'] as List<dynamic>?;
+
+                        if (imageUrls != null && imageUrls.isNotEmpty) {
+                          return CarouselSlider(
+                            options: CarouselOptions(
+                              height: 500,
+                              enlargeCenterPage: true,
+                              enableInfiniteScroll: true,
+                              viewportFraction: 1.0,
+                              autoPlay: true,
+                            ),
+                            items: imageUrls.map((url) {
+                              return Image.network(
+                                url,
+                                fit: BoxFit.cover,
+                                width: MediaQuery.of(context).size.width,
+                                errorBuilder: (context, error, stackTrace) => Container(
+                                  alignment: Alignment.center,
+                                  color: Colors.grey[200],
+                                  child: Image.asset(
+                                      'assets/images/store.png',
+                                      fit: BoxFit.contain,
+                                      width: 220,
+                                      height: 350),
+                                ),
+                              );
+                            }).toList(),
+                          );
+                        } else {
+                          return Image.asset(
+                            'assets/images/store.png',
+                            fit: BoxFit.contain,
+                            width: 220,
+                            height: 350,
+                          );
+                        }
                       },
-                    )
-                        :
-                        Image.asset(
-                          'assets/images/store.png',
-                          fit: BoxFit.contain,
-                          width: 220,
-                          height: 350,)
+                    ),
                   ),
                 ),
           

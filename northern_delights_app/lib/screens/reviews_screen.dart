@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class ReviewsScreen extends StatelessWidget {
   final String userId;
@@ -38,6 +39,13 @@ class ReviewsScreen extends StatelessWidget {
             return const Center(child: Text("No reviews available."));
           }
 
+          // final reviews = snapshot.data!.docs.toList()
+          //   ..sort((a, b) {
+          //     final aTime = (a['datetime'] as Timestamp).toDate();
+          //     final bTime = (b['datetime'] as Timestamp).toDate();
+          //     return bTime.compareTo(aTime); // Sort by full datetime
+          //   });
+
           final reviews = snapshot.data!.docs;
 
           return ListView.builder(
@@ -49,7 +57,11 @@ class ReviewsScreen extends StatelessWidget {
               final serviceRating = review['serviceRating'] ?? 0.0;
               final atmosphereRating = review['atmosphereRating'] ?? 0.0;
               final comment = review['feedback'] ?? 'No comment provided';
-              final timestamp = (review['datetime'] as Timestamp?)?.toDate();
+              final timestamp = review['datetime'] as Timestamp?;
+
+
+              final formattedDate = _formatDate(timestamp!);
+
 
               return Card(
                 margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -101,7 +113,7 @@ class ReviewsScreen extends StatelessWidget {
                       const SizedBox(height: 8),
                       if (timestamp != null)
                         Text(
-                          "Reviewed on: ${timestamp.toLocal()}",
+                          "Reviewed on: $formattedDate",
                           style: const TextStyle(
                             color: Colors.grey,
                             fontSize: 12,
@@ -116,5 +128,10 @@ class ReviewsScreen extends StatelessWidget {
         },
       ),
     );
+  }
+
+  String _formatDate(Timestamp timestamp) {
+    final date = timestamp.toDate().toLocal(); // Respect device timezone
+    return DateFormat('yyyy-MM-dd hh:mm a').format(date);
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:northern_delights_app/models/gastropub_doc_data.dart';
 import 'package:northern_delights_app/models/restaurant_doc_data.dart';
+import 'package:northern_delights_app/models/update_points.dart';
 import 'package:northern_delights_app/screens/establishments_map_screen.dart';
 import 'package:northern_delights_app/screens/reviews_screen.dart';
 import 'package:northern_delights_app/screens/seller_management_screen.dart';
@@ -33,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String selectedPage = '';
   String shopName = '';
   String storeType = '';
+  double points = 0;
 
   bool isAdmin = false;
   bool isSeller = false;
@@ -41,16 +43,18 @@ class _HomeScreenState extends State<HomeScreen> {
   String _searchResult = '';
   late String _searchKeyword;
 
-  String? userID;
+  String? userID = FirebaseAuth.instance.currentUser?.uid;
   RestaurantSearch restaurantSearch = RestaurantSearch();
   GastropubSearch gastropubSearch = GastropubSearch();
 
   @override
   void initState() {
     super.initState();
-    _fetchUserData();
+    fetchUserData();
     updateAllRatings('gastropubs');
     updateAllRatings('restaurants');
+    _updatePoints();
+
   }
 
   void _onCategorySelected(String category) {
@@ -58,6 +62,14 @@ class _HomeScreenState extends State<HomeScreen> {
       _selectedCategory = category;
     });
   }
+
+  Future<void> _updatePoints() async {
+    double updatedPoints = await getUserPoints();
+    setState(() {
+      points = updatedPoints;
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -217,15 +229,31 @@ class _HomeScreenState extends State<HomeScreen> {
                 decoration: const BoxDecoration(
                   color: Colors.blue,
                 ),
-                child: firstName.isNotEmpty
-                    ? Text(
-                  'Hi, $firstName $lastName',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 18,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    firstName.isNotEmpty
+                        ? Text(
+                      'Hi, $firstName $lastName',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 18,
+                      ),
+                    )
+                        : Text('Unknown User'),
+                    const SizedBox(height: 10),
+
+                    Text(
+                      'Points: ${points.toStringAsFixed(2)}',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 16,
+                      ),
+                    ),
+
+
+                  ],
                 )
-                    : Text(''),
               ),
               if(!isSeller)
                 ListTile(
@@ -235,8 +263,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     setState(() {
                       selectedPage = 'Profile';
                       Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => UserProfileScreen(userId: userID!,))
+                        MaterialPageRoute(builder: (context) => UserProfileScreen(userId: userID!,)),
                       );
+
                     });
                   },
                 ),
@@ -323,6 +352,15 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
+        onDrawerChanged: (drawerOpen) {
+          if (drawerOpen) {
+            setState(() {
+              _updatePoints();
+              fetchUserData();
+            });
+          }
+        },
+
       ),
     );
   }
@@ -357,7 +395,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
 
-  Future<void> _fetchUserData() async {
+  Future<void> fetchUserData() async {
     String? role = await fetchRole();
 
     if (role == 'admin'){
@@ -385,12 +423,14 @@ class _HomeScreenState extends State<HomeScreen> {
           firstName = userData?['first_name'] ?? '';
           lastName = userData?['last_name'] ?? '';
           shopName = userData?['shop_name'] ?? '';
+          points = userData?['points'] ?? 0;
         });
       } else {
         setState(() {
           firstName = '';
           lastName = '';
           shopName = '';
+          points = 0;
 
           return;
         });
@@ -403,6 +443,7 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         firstName = userData?['first_name'] ?? '';
         lastName = userData?['last_name'] ?? '';
+        points = userData?['points'] ?? 0;
         isAdmin = false;
 
       });
@@ -471,10 +512,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<String> fetchRole() async {
     try {
-
-      User? user = FirebaseAuth.instance.currentUser;
-      userID = user?.uid;
-
       if (userID!.isEmpty) {
         print('Error: userId is empty.');
         return 'err: invalid_userID';

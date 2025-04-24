@@ -33,10 +33,19 @@ class _ReviewsDetailsState extends State<ReviewsDetails> {
         .collection(widget.foodPlaceCategory)
         .doc(widget.foodPlaceID)
         .collection('reviews')
-        .orderBy('datetime', descending: true)
         .get();
 
-    return querySnapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+
+// Convert to a list and sort using Dart
+    final sortedDocs = querySnapshot.docs.toList()
+      ..sort((a, b) {
+        final aTime = (a['datetime'] as Timestamp).toDate();
+        final bTime = (b['datetime'] as Timestamp).toDate();
+        return bTime.compareTo(aTime); // Descending (latest first)
+      });
+
+
+    return sortedDocs.map((doc) => doc.data() as Map<String, dynamic>).toList();
   }
 
   @override
@@ -188,11 +197,7 @@ class _ReviewsDetailsState extends State<ReviewsDetails> {
                                         ],
                                       ),
 
-
-
                                       const SizedBox(height: 10),
-
-
 
                                       Text('Comment', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),),
                                       Container(
@@ -256,8 +261,8 @@ class _ReviewsDetailsState extends State<ReviewsDetails> {
   }
 
   String _formatDate(Timestamp timestamp) {
-    final date = timestamp.toDate();
-    final utc8Date = date.add(Duration(hours: 8));
-    return DateFormat('yyyy-MM-dd hh:mm a').format(utc8Date);
+    final date = timestamp.toDate().toLocal();
+    //final utc8Date = date.add(Duration(hours: 8));
+    return DateFormat('yyyy-MM-dd hh:mm a').format(date);
   }
 }

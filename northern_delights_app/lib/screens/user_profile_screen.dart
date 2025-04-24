@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:northern_delights_app/screens/home_screen.dart';
 import 'package:northern_delights_app/screens/pin_location_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
@@ -22,6 +23,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   late TextEditingController firstNameController;
   late TextEditingController lastNameController;
   late TextEditingController shopNameController;
+  late TextEditingController pointsController;
+
   final TextEditingController _latController = TextEditingController();
   final TextEditingController _longController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
@@ -61,6 +64,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         firstNameController = TextEditingController(text: doc['first_name'] ?? '');
         lastNameController = TextEditingController(text: doc['last_name'] ?? '');
         shopNameController = TextEditingController(text: doc['shop_name'] ?? '');
+        pointsController = isSeller ? TextEditingController(text: '') : TextEditingController(text: doc['points']?.toString() ?? '0');
         _imageUrl = doc['image_url'] ?? '';
         isLoading = false;
       });
@@ -166,6 +170,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       //     content: Text('Please enter valid latitude and longitude'),
       //   ));
       // }
+    } else {
+      await _firestore.collection('users').doc(widget.userId).update({
+        'first_name': firstNameController.text,
+        'last_name': lastNameController.text,
+      });
+
+      await _uploadImage('users', '${widget.userId}.png');
     }
 
     if(!isUploading){
@@ -324,6 +335,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       : null,
                 ),
               ),
+              const SizedBox(height: 20),  // Space below the image
+              Offstage(
+                offstage: isSeller,
+                child:
+                Text('Points: ${pointsController.text}'),
+              ),
+              const SizedBox(height: 20,),
               TextField(
                 controller: firstNameController,
                 decoration: const InputDecoration(labelText: 'First Name'),

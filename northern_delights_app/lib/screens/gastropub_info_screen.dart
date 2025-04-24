@@ -2,10 +2,13 @@ import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:northern_delights_app/models/update_points.dart';
 import 'package:northern_delights_app/screens/direction_screen.dart';
 import 'package:northern_delights_app/screens/leave_review_screen.dart';
 import 'package:northern_delights_app/widgets/menu_widget.dart';
 import 'package:northern_delights_app/widgets/reviews_widget.dart';
+
+import '../models/user_service.dart';
 
 enum Tab { Overview, Menu, Review }
 
@@ -151,8 +154,13 @@ class _GastropubInfoState extends State<GastropubInfo> {
                       if(widget.isRegular && !widget.isAdmin) ... [
                         const SizedBox(height: 20,),
 
+
                         ElevatedButton(onPressed: () => Navigator.push(
-                            context, MaterialPageRoute(builder: (context) => LeaveReviewScreen(collectionType: 'gastropubs' ,restaurantGastropubId: widget.gastropubID))),
+                            context, MaterialPageRoute(builder: (context) =>
+                            LeaveReviewScreen(collectionType: 'gastropubs', restaurantGastropubId: widget.gastropubID)))
+                          .then((_) {
+                            getUserPoints();
+                          }),
                           child: Text('Add Review'),),
                       ],
                     ],
@@ -453,94 +461,110 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                         ),
                         child: Padding(
                           padding: const EdgeInsets.all(15),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                gastro['name'],
-                                style: const TextStyle(
-                                  fontSize: 23,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 5),
-                              Row(
-                                children: [
-                                  SvgPicture.asset(
-                                    'assets/icons/location-pin.svg',
-                                    height: 20,
-                                    width: 20,
-                                    colorFilter: ColorFilter.mode(
-                                        Colors.white70, BlendMode.srcIn),
+                          child: SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  gastro['name'],
+                                  style: const TextStyle(
+                                    fontSize: 23,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
                                   ),
-                                  SizedBox(width: 5),
-                                  Expanded(
-                                    child: Text(
-                                      overflow: TextOverflow.fade,
-                                      maxLines: 2,
-                                      gastro['location'],
+                                ),
+                            
+                                const SizedBox(height: 5,),
+                            
+                                FutureBuilder<String>(
+                                  future: UserService.getSellerName(gastroID),
+                                  builder: (context, snapshot) {
+                                    if (snapshot.hasData) {
+                                      return Text(snapshot.data!, style: TextStyle(color: Colors.white),);
+                                    } else {
+                                      return const Text('Owner: Unknown', style: TextStyle(color: Colors.white),);
+                                    }
+                                  },
+                                ),
+                            
+                                const SizedBox(height: 5),
+                                Row(
+                                  children: [
+                                    SvgPicture.asset(
+                                      'assets/icons/location-pin.svg',
+                                      height: 20,
+                                      width: 20,
+                                      colorFilter: ColorFilter.mode(
+                                          Colors.white70, BlendMode.srcIn),
+                                    ),
+                                    SizedBox(width: 5),
+                                    Expanded(
+                                      child: Text(
+                                        overflow: TextOverflow.fade,
+                                        maxLines: 2,
+                                        gastro['location'],
+                                        style: TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 5),
+                                Row(
+                                  children: [
+                                    const SizedBox(width: 2),
+                                    SvgPicture.asset(
+                                      'assets/icons/star.svg',
+                                      height: 15,
+                                      width: 15,
+                                      colorFilter: ColorFilter.mode(
+                                          Colors.white70, BlendMode.srcIn),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      gastro['rating'].toString(),
                                       style: TextStyle(
                                         color: Colors.white70,
                                         fontSize: 16,
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 5),
-                              Row(
-                                children: [
-                                  const SizedBox(width: 2),
-                                  SvgPicture.asset(
-                                    'assets/icons/star.svg',
-                                    height: 15,
-                                    width: 15,
-                                    colorFilter: ColorFilter.mode(
-                                        Colors.white70, BlendMode.srcIn),
-                                  ),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    gastro['rating'].toString(),
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 16,
+                                  ],
+                                ),
+                                const SizedBox(height: 5),
+                                Row(
+                                  children: [
+                                    Icon(Icons.access_time_outlined, color: Colors.white70,size: 16),
+                                      
+                                    SizedBox(width: 8),
+                                    Text(
+                                      convertToDateString(openTimeOfDay),
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 16,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 5),
-                              Row(
-                                children: [
-                                  Icon(Icons.access_time_outlined, color: Colors.white70,size: 16),
-          
-                                  SizedBox(width: 8),
-                                  Text(
-                                    convertToDateString(openTimeOfDay),
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 16,
+                                    SizedBox(width: 4),
+                                    Text(
+                                      '-',
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 16,
+                                      ),
                                     ),
-                                  ),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    '-',
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 16,
+                                    SizedBox(width: 4),
+                                    Text(
+                                      convertToDateString(closeTimeOfDay),
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 16,
+                                      ),
                                     ),
-                                  ),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    convertToDateString(closeTimeOfDay),
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),

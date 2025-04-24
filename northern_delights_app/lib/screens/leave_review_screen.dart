@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:northern_delights_app/models/update_average_rating.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:northern_delights_app/models/update_points.dart';
 
 import '../models/review.dart';
 
@@ -37,16 +38,24 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
 
   bool _isSubmitting = false;
 
+  double _points = 3.0;
+
   Future<void> _submitReview() async {
     if (_reviewController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a review')),
-      );
-      return;
+      _reviewController.text = "No comment provided";
+    } else {
+      if(_reviewController.text.length > 100) {
+        _points = _points += 25.5;
+      } else if(_reviewController.text.length > 30 && _reviewController.text.length < 100) {
+        _points = _points += 10.5;
+      } else if (_reviewController.text.length < 30 && _reviewController.text.isNotEmpty) {
+        _points = _points += 5.5;
+      }
     }
 
     setState(() {
       _isSubmitting = true;
+      getUserPoints();
     });
 
     String userId = FirebaseAuth.instance.currentUser!.uid;
@@ -57,6 +66,10 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
     }
 
     String userName = "${userDoc['first_name']} ${userDoc['last_name']}";
+
+    if(_selectedImage != null) {
+      _points = _points += 10.5;
+    }
 
     await _uploadImage();
 
@@ -90,8 +103,10 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
       });
 
       await updateAverageRating(widget.collectionType, widget.restaurantGastropubId);
+      await updateUserPoints(_points);
 
       Navigator.pop(context);
+
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Error submitting review')),

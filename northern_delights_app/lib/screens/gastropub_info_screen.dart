@@ -91,7 +91,7 @@ class _GastropubInfoState extends State<GastropubInfo> {
         children: [
           StreamBuilder<DocumentSnapshot>(
             stream: FirebaseFirestore.instance
-                .collection('restaurants')
+                .collection('gastropubs')
                 .doc(widget.gastropubID)
                 .snapshots(),
             builder: (context, snapshot) {
@@ -100,9 +100,9 @@ class _GastropubInfoState extends State<GastropubInfo> {
               }
 
               var data = snapshot.data!.data();
-              if (data == null) {
-                return Center(child: Text('No data found.'));
-              }
+              // if (data == null) {
+              //   return Center(child: Text('No data found.'));
+              // }
 
               var gastro = snapshot.data!.data() as Map<String, dynamic>;
               String gastroOverview = gastro['overview'] ?? '';

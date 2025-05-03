@@ -187,42 +187,53 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 20),
                 Offstage(
                   offstage: (_selectedCategory == 'Empanada' || _selectedCategory == 'Sinanglao'),
-                  child: const Text('Gastropubs',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontFamily: 'Roboto',
-                        fontWeight: FontWeight.w700,
-                      )),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Gastropubs',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontFamily: 'Roboto',
+                            fontWeight: FontWeight.w700,
+                          )),
+                      const SizedBox(height: 10),
+
+                      SizedBox(
+                        height: 320,
+                        child: GastropubCards(isRegular: !isSeller, isAdmin: isAdmin, selectedCategory: _selectedCategory),
+                      ),
+                    ],
+                  )
                 ),
-                const SizedBox(height: 20),
+
+                SizedBox(height: 20),
                 Offstage(
                   offstage: (_selectedCategory == 'Empanada' || _selectedCategory == 'Sinanglao'),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Restaurants',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontFamily: 'Roboto',
+                            fontWeight: FontWeight.w700,
+                          )),
+
+                      const SizedBox(height: 10),
+
+                      SizedBox(
+                        height: 320,
+                        child: RestaurantsCard(isRegular: !isSeller, isAdmin: isAdmin, selectedCategory: _selectedCategory),
+                      ),
+                    ],
+                  )
+                ),
+                Offstage(
+                  offstage: (_selectedCategory == 'Most Viewed' || _selectedCategory == 'Latest'),
                   child: SizedBox(
                     height: 320,
-                    child: GastropubCards(isRegular: !isSeller, isAdmin: isAdmin, selectedCategory: _selectedCategory),
+                    child: SinanglaoEmpanadaCards(selectedCategory: _selectedCategory, isRegular: !isSeller, isAdmin: isAdmin),
                   ),
-                ),
-                SizedBox(height: 5),
-                Offstage(
-                  offstage: (_selectedCategory == 'Empanada' || _selectedCategory == 'Sinanglao'),
-                  child: Text('Restaurants',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontFamily: 'Roboto',
-                        fontWeight: FontWeight.w700,
-                      )),
-                ),
-                const SizedBox(height: 10),
-                Offstage(
-                  offstage: (_selectedCategory == 'Empanada' || _selectedCategory == 'Sinanglao'),
-                  child: SizedBox(
-                    height: 320,
-                    child: RestaurantsCard(isRegular: !isSeller, isAdmin: isAdmin, selectedCategory: _selectedCategory),
-                  ),
-                ),
-                SizedBox(
-                  height: 320,
-                  child: SinanglaoEmpanadaCards(selectedCategory: _selectedCategory, isRegular: !isSeller, isAdmin: isAdmin),
                 )
               ],
             ),
@@ -384,19 +395,19 @@ class _HomeScreenState extends State<HomeScreen> {
       _searchKeyword = keyword;
     }
 
-    // // Query both gastropubs and restaurants collections
-    // QuerySnapshot gastropubsSnapshot = await FirebaseFirestore.instance
-    //     .collection('gastropubs')
-    //     .where('name', isGreaterThanOrEqualTo: keyword)
-    //     .where('name', isLessThanOrEqualTo: '${keyword}\uf8ff')
-    //     .get();
-    //
-    // QuerySnapshot restaurantsSnapshot = await FirebaseFirestore.instance
-    //     .collection('restaurants')
-    //     .where('name', isGreaterThanOrEqualTo: keyword)
-    //     .where('name', isLessThanOrEqualTo: '${keyword}\uf8ff')
-    //     .get();
-    //
+    // Query both gastropubs and restaurants collections
+    QuerySnapshot gastropubsSnapshot = await FirebaseFirestore.instance
+        .collection('gastropubs')
+        .where('name', isGreaterThanOrEqualTo: keyword)
+        .where('name', isLessThanOrEqualTo: '${keyword}\uf8ff')
+        .get();
+
+    QuerySnapshot restaurantsSnapshot = await FirebaseFirestore.instance
+        .collection('restaurants')
+        .where('name', isGreaterThanOrEqualTo: keyword)
+        .where('name', isLessThanOrEqualTo: '${keyword}\uf8ff')
+        .get();
+
     setState(() {
       _searchResult = keyword;
     });

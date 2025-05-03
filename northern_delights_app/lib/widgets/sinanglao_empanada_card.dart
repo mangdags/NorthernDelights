@@ -3,8 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:northern_delights_app/models/gastropub_doc_data.dart';
-
+import 'package:northern_delights_app/models/sinanglao_empanada_doc_data.dart';
 import '../screens/sinanglao_empanada_info_screen.dart';
 
 class SinanglaoEmpanadaCards extends StatefulWidget {
@@ -19,7 +18,7 @@ class SinanglaoEmpanadaCards extends StatefulWidget {
 }
 
 class _SinanglaoEmpanadaCardsState extends State<SinanglaoEmpanadaCards> {
-  final GastropubService sinanglaoEmpanadaService = GastropubService();
+  final SinanglaoEmpanadaService sinanglaoEmpanadaService = SinanglaoEmpanadaService();
 
   late Timestamp openingTime;
   late Timestamp closingTime;

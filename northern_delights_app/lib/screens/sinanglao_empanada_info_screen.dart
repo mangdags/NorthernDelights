@@ -47,25 +47,30 @@ class _SinanglaoEmpanadaInfoState extends State<SinanglaoEmpanadaInfo> {
   double? storeLat;
   double? storeLong;
   String? storeName;
+  String? storeType;
 
 
   @override
   void initState() {
     super.initState();
+    initialize();
     _scrollController.addListener(() {
       setState(() {
         _showCircularButton = _scrollController.offset > 60;
       });
     });
     _incrementViewCount();
-    updateAverageRating(widget.storeID);
+  }
+
+  void initialize() async {
+    await loadStoreType(); // sets storeType
+    updateAverageRating(widget.storeID, storeType!);
   }
 
   Future<void> _incrementViewCount() async {
     try {
-      final storeType = await getStoreType(); // <-- await here
       await FirebaseFirestore.instance
-          .collection(storeType)
+          .collection(storeType!)
           .doc(widget.storeID)
           .update({
         'view_count': FieldValue.increment(1),
@@ -85,6 +90,12 @@ class _SinanglaoEmpanadaInfoState extends State<SinanglaoEmpanadaInfo> {
     });
   }
 
+  Future<void> loadStoreType() async {
+    storeType = await getStoreType();
+    setState(() {}); // trigger rebuild if UI depends on storeType
+  }
+
+
   Future<String> getStoreType() async {
     final docSnapshot = await FirebaseFirestore.instance
         .collection('users')
@@ -101,125 +112,104 @@ class _SinanglaoEmpanadaInfoState extends State<SinanglaoEmpanadaInfo> {
 
   @override
   Widget build(BuildContext context) {
+    if (storeType == null) {
+      return Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          FutureBuilder<String>(
-            future: getStoreType(),
-            builder: (context, storeTypeSnapshot) {
-              final storeTypeState = storeTypeSnapshot.connectionState;
-
-              if (storeTypeState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+          StreamBuilder<DocumentSnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection(storeType!)
+                .doc(widget.storeID)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return Center(child: CircularProgressIndicator());
               }
 
-              if (storeTypeSnapshot.hasError) {
-                return Center(child: Text('Something went wrong. Please try again.'));
+              var data = snapshot.data!.data();
+              if (data == null) {
+                return Center(child: Text('No data found.'));
               }
 
-              final storeType = storeTypeSnapshot.data;
+              var sinanglaoempanada = snapshot.data!.data() as Map<String, dynamic>;
+              String storeOverview = sinanglaoempanada['overview'] ?? '';
+              storeName = sinanglaoempanada['name'];
 
-              if (storeType == null || storeType.isEmpty) {
-                return Center(child: Text('Store type not found.'));
-              }
-
-              return StreamBuilder<DocumentSnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection(storeType)
-                    .doc(widget.storeID)
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (snapshot.hasError) {
-                    return Center(child: Text('Error loading store info.'));
-                  }
-
-                  if (!snapshot.hasData || !snapshot.data!.exists) {
-                    return Center(child: Text('No data found.'));
-                  }
-
-                  var gastro = snapshot.data!.data() as Map<String, dynamic>;
-                  String gastroOverview = gastro['overview'] ?? '';
-                  storeName = gastro['name'];
-
-                  return SingleChildScrollView(
-                    controller: _scrollController,
-                    child: Column(
+              return SingleChildScrollView(
+                controller: _scrollController,
+                child: Column(
+                  children: [
+                    FoodPlaceInfoWidget(
+                      storeType: storeType!,
+                      storeID: widget.storeID,
+                      onLocationUpdated: _updateCoordinates // Pass the callback
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        FoodPlaceInfoWidget(
-                          storeID: widget.storeID,
-                          onLocationUpdated: _updateCoordinates,
-                          storeType: storeType, // <-- use fetched storeType here
+                        TextButton(
+                          onPressed: () => setState(() => selectedTab = Tab.Overview),
+                          style: ButtonStyle(
+                            foregroundColor: WidgetStateProperty.all(
+                                selectedTab == Tab.Overview ? Colors.black : Colors.black45),
+                            textStyle: WidgetStateProperty.all(
+                              TextStyle(fontSize: selectedTab == Tab.Overview ? 20 : 18),
+                            ),
+                          ),
+                          child: Text('Overview'),
                         ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            TextButton(
-                              onPressed: () => setState(() => selectedTab = Tab.Overview),
-                              style: ButtonStyle(
-                                foregroundColor: WidgetStateProperty.all(
-                                    selectedTab == Tab.Overview ? Colors.black : Colors.black45),
-                                textStyle: WidgetStateProperty.all(
-                                  TextStyle(fontSize: selectedTab == Tab.Overview ? 20 : 18),
-                                ),
-                              ),
-                              child: Text('Overview'),
+                        TextButton(
+                          onPressed: () => setState(() => selectedTab = Tab.Menu),
+                          style: ButtonStyle(
+                            foregroundColor: WidgetStateProperty.all(
+                                selectedTab == Tab.Menu ? Colors.black : Colors.black45),
+                            textStyle: WidgetStateProperty.all(
+                              TextStyle(fontSize: selectedTab == Tab.Menu ? 20 : 18),
                             ),
-                            TextButton(
-                              onPressed: () => setState(() => selectedTab = Tab.Menu),
-                              style: ButtonStyle(
-                                foregroundColor: WidgetStateProperty.all(
-                                    selectedTab == Tab.Menu ? Colors.black : Colors.black45),
-                                textStyle: WidgetStateProperty.all(
-                                  TextStyle(fontSize: selectedTab == Tab.Menu ? 20 : 18),
-                                ),
-                              ),
-                              child: Text('Menu'),
-                            ),
-                            TextButton(
-                              onPressed: () => setState(() => selectedTab = Tab.Review),
-                              style: ButtonStyle(
-                                foregroundColor: WidgetStateProperty.all(
-                                    selectedTab == Tab.Review ? Colors.black : Colors.black45),
-                                textStyle: WidgetStateProperty.all(
-                                  TextStyle(fontSize: selectedTab == Tab.Review ? 20 : 18),
-                                ),
-                              ),
-                              child: Text('Review'),
-                            ),
-                          ],
+                          ),
+                          child: Text('Menu'),
                         ),
-                        if (selectedTab == Tab.Overview) _buildText(gastroOverview),
-                        if (selectedTab == Tab.Menu) _menuDetails(storeType),
-                        if (selectedTab == Tab.Review) ...[
-                          _reviewDetails(storeType),
-                          if (widget.isRegular && !widget.isAdmin) ...[
-                            const SizedBox(height: 20),
-                            ElevatedButton(
-                              onPressed: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => LeaveReviewScreen(
-                                    collectionType: storeType, // <-- use fetched storeType here
-                                    restaurantGastropubId: widget.storeID,
-                                  ),
-                                ),
-                              ).then((_) {
-                                getUserPoints();
-                              }),
-                              child: Text('Add Review'),
+                        TextButton(
+                          onPressed: () => setState(() => selectedTab = Tab.Review),
+                          style: ButtonStyle(
+                            foregroundColor: WidgetStateProperty.all(
+                                selectedTab == Tab.Review ? Colors.black : Colors.black45),
+                            textStyle: WidgetStateProperty.all(
+                              TextStyle(fontSize: selectedTab == Tab.Review ? 20 : 18),
                             ),
-                          ],
-                        ],
-                        const SizedBox(height: 100),
+                          ),
+                          child: Text('Review'),
+                        ),
                       ],
                     ),
-                  );
-                },
+                    if (selectedTab == Tab.Overview) _buildText(storeOverview),
+                    if (selectedTab == Tab.Menu) _menuDetails(storeType!),
+                    if (selectedTab == Tab.Review) ... [
+                      _reviewDetails(storeType!),
+                      if(widget.isRegular && !widget.isAdmin) ... [
+                        const SizedBox(height: 20,),
+
+
+                        ElevatedButton(onPressed: () => Navigator.push(
+                            context, MaterialPageRoute(builder: (context) =>
+                            LeaveReviewScreen(collectionType: storeType!, restaurantGastropubId: widget.storeID)))
+                            .then((_) {
+                          getUserPoints();
+                        }),
+                          child: Text('Add Review'),),
+                      ],
+                    ],
+
+                    const SizedBox(height: 100),
+                    //Prevent clipping
+                  ],
+                ),
               );
             },
           ),
@@ -331,11 +321,10 @@ class _SinanglaoEmpanadaInfoState extends State<SinanglaoEmpanadaInfo> {
     );
   }
 
-  Future<void> updateAverageRating(String docId) async {
+  Future<void> updateAverageRating(String docId, String storeType) async {
     final firestore = FirebaseFirestore.instance;
 
     try {
-      final storeType = await getStoreType(); // <-- await here
       final reviewsCollection = firestore
           .collection(storeType)
           .doc(docId)
@@ -369,11 +358,11 @@ class _SinanglaoEmpanadaInfoState extends State<SinanglaoEmpanadaInfo> {
   }
 
 
-  Widget _buildText(String gastroOverview) {
+  Widget _buildText(String sinanglaoempanadaOverview) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
       child: Text(
-        gastroOverview,
+        sinanglaoempanadaOverview,
         overflow: TextOverflow.fade,
         style: TextStyle(
           color: Colors.black87,

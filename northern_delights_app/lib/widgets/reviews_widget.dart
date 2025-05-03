@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -106,23 +107,23 @@ class _ReviewsDetailsState extends State<ReviewsDetails> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   reviews['reviewimage'] != null && reviews['reviewimage'].toString().isNotEmpty
-                                  ? Image.network(
-                                    reviews['reviewimage'],
+                                  ? CachedNetworkImage(imageUrl: reviews['reviewimage'],
                                     fit: BoxFit.contain,
                                     alignment: Alignment.center,
                                     width: 150,
                                     height: 150,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Container(
+                                    errorWidget: (context, url, error) => Container(
+                                      alignment: Alignment.center,
+                                      child: Image.asset(
+                                        'assets/images/review.png',
+                                        fit: BoxFit.contain,
                                         alignment: Alignment.center,
-                                        child: const Icon(
-                                          Icons.error,
-                                          size: 50,
-                                          color: Colors.red,
-                                        ),
-                                      );
-                                    },
+                                        width: 60,
+                                        height: 60,
+                                      ),
+                                    ),
                                   )
+
                                   : Image.asset(
                                     'assets/images/review.png',
                                     fit: BoxFit.contain,

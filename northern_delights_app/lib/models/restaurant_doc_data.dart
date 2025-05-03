@@ -141,6 +141,30 @@ class RestaurantService {
         ]).map((lists) {
           return [...lists[0], ...lists[1]];
         });
+      // case 'Sinanglao':
+      //   final keywordVariants = ['sinanglao', 'sinanglaw', 'sinanglaoan', 'sinanglawan'];
+      //   final gastroRestoStream = SinanglaoStore().getSinanglaoStore(keywordVariants);
+      //
+      //   return CombineLatestStream.list([
+      //     gastroRestoStream,
+      //   ]).map((lists) {
+      //     return [...lists[0], ...lists[1]];
+      //   });
+      // case 'Empanada':
+      //   final keywordVariants = ['empanada', 'empanadaan'];
+      //   final gastroRestoStream = EmpanadaStore().getEmpanadaStore(keywordVariants);
+      //
+      //   return CombineLatestStream.list([
+      //     gastroRestoStream,
+      //   ]).map((lists) {
+      //     return [...lists[0], ...lists[1]];
+      //   });
+      case 'Sinanglao':
+        final keywordVariants = ['sinanglao', 'sinanglaw', 'sinanglaoan', 'sinanglawan'];
+        return SinanglaoStore().getSinanglaoStore(keywordVariants);
+      case 'Empanada':
+        final keywordVariants = ['empanada', 'empanadaan'];
+        return EmpanadaStore().getEmpanadaStore(keywordVariants);
       default:
         final restaurantStream = RestaurantAllUnsorted().getRestaurantData(keyword: keyword);
         final gastroRestoStream = GastroRestoAllUnsorted().getGastroRestoData();

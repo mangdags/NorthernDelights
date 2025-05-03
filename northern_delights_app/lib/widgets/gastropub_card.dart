@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -130,21 +131,20 @@ class _GastropubCardsState extends State<GastropubCards> {
 
                                                             if (firstImageUrl != null && firstImageUrl.isNotEmpty) {
 
-                                                            return Image.network(
-                                                                firstImageUrl,
+                                                            return CachedNetworkImage(imageUrl: firstImageUrl,
                                                                 fit: BoxFit.cover,
                                                                 width: 220,
                                                                 height: 300,
-                                                                errorBuilder: (context, error, stackTrace) => Container(
-                                                                alignment: Alignment.center,
-                                                                color: Colors.grey[200],
-                                                                child: Image.asset(
-                                                                    'assets/images/store.png',
-                                                                    fit: BoxFit.contain,
+                                                                placeholder: (context, url) => Center(child: CircularProgressIndicator()),
+                                                                errorWidget: (context, url, error) => Container(
+                                                                    alignment: Alignment.center,
+                                                                    color: Colors.grey[200],
+                                                                    child: Image.asset(
+                                                                        'assets/images/store.png',
+                                                                        fit: BoxFit.contain,
                                                                         width: 220,
                                                                         height: 350),
-                                                                        ),
-                                                                    );
+                                                                ),);
                                                             } else {
                                                             return Image.asset(
                                                                 'assets/images/store.png',
@@ -154,8 +154,9 @@ class _GastropubCardsState extends State<GastropubCards> {
                                                                 );
                                                             }
                                                         },
+                                                        ),
                                                     ),
-                                                ),),
+                                                ),
 
                                                 if (isStoreClosed(openTimeOfDay, closeTimeOfDay, now))...[
 

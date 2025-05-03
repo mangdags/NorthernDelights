@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:northern_delights_app/screens/sinanglao_empanada_info_screen.dart';
 import 'package:rxdart/rxdart.dart';
 
 class GastropubAllUnsorted {
@@ -128,7 +129,7 @@ class GastropubService {
         return GastropubLatestAdded().getGastropubLatestAdded();
       case 'Sinanglao':
         final keywordVariants = ['sinanglao', 'sinanglaw', 'sinanglaoan', 'sinanglawan'];
-        return SinanglaoStore().getSinanglaoStore(keywordVariants);
+        return SinanglaoEmpanadaInfo().getSinanglaoStore(keywordVariants);
       case 'Empanada':
         final keywordVariants = ['empanada', 'empanadaan'];
         return EmpanadaStore().getEmpanadaStore(keywordVariants);

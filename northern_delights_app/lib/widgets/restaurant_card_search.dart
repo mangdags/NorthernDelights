@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -107,22 +108,42 @@ class _RestaurantsCardSearchState extends State<RestaurantsCardSearch> {
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(20),
-                            child: Image.network(
-                              resto['image_url'],
-                              fit: BoxFit.cover,
-                              width: 220,
-                              height: 300,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  width: 220,
-                                  height: 300,
-                                  alignment: Alignment.center,
-                                  child: Icon(
-                                    Icons.error,
-                                    size: 220,
-                                    color: Colors.red,
-                                  ),
-                                );
+                            child: FutureBuilder<DocumentSnapshot>(
+                              future: FirebaseFirestore.instance.collection('users').doc(resto['id']).get(),
+                              builder: (context, userSnapshot) {
+                                if (!userSnapshot.hasData) {
+                                  return Center(child: CircularProgressIndicator());
+                                }
+
+                                final userData = userSnapshot.data!.data() as Map<String, dynamic>;
+                                final imageUrls = userData['image_urls'] as List<dynamic>?;
+                                final firstImageUrl = imageUrls != null && imageUrls.isNotEmpty ? imageUrls[0] as String : null;
+
+
+                                if (firstImageUrl != null && firstImageUrl.isNotEmpty) {
+
+                                  return CachedNetworkImage(imageUrl: firstImageUrl,
+                                    fit: BoxFit.cover,
+                                    width: 220,
+                                    height: 300,
+                                    placeholder: (context, url) => Center(child: CircularProgressIndicator()),
+                                    errorWidget: (context, url, error) => Container(
+                                      alignment: Alignment.center,
+                                      color: Colors.grey[200],
+                                      child: Image.asset(
+                                          'assets/images/store.png',
+                                          fit: BoxFit.contain,
+                                          width: 220,
+                                          height: 350),
+                                    ),);
+                                } else {
+                                  return Image.asset(
+                                    'assets/images/store.png',
+                                    fit: BoxFit.contain,
+                                    width: 220,
+                                    height: 350,
+                                  );
+                                }
                               },
                             ),
                           ),

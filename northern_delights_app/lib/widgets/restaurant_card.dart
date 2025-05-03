@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -123,12 +124,11 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
 
                               if (firstImageUrl != null && firstImageUrl.isNotEmpty) {
 
-                                return Image.network(
-                                  firstImageUrl,
+                                return CachedNetworkImage(imageUrl: firstImageUrl,
                                   fit: BoxFit.cover,
                                   width: 220,
                                   height: 300,
-                                  errorBuilder: (context, error, stackTrace) => Container(
+                                  errorWidget: (context, url, error) => Container(
                                     alignment: Alignment.center,
                                     color: Colors.grey[200],
                                     child: Image.asset(
@@ -136,8 +136,10 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
                                       fit: BoxFit.contain,
                                       width: 220,
                                       height: 350),
-                                    ),
-                                  );
+                                  ),
+                                  placeholder: (context, url) => Center(
+                                    child: CircularProgressIndicator(),
+                                  ),);
                               } else {
                               return Image.asset(
                                     'assets/images/store.png',
@@ -147,32 +149,6 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
                                   );
                                 }
                               },
-                            // child: resto['image_url'] != null && resto['image_url'].toString().isNotEmpty
-                            // ?
-                            // Image.network(
-                            //   resto['image_url'],
-                            //   fit: BoxFit.cover,
-                            //   width: 220,
-                            //   height: 300,
-                            //   errorBuilder: (context, error, stackTrace) {
-                            //     return Container(
-                            //       width: 220,
-                            //       height: 300,
-                            //       alignment: Alignment.center,
-                            //       child: Icon(
-                            //         Icons.error,
-                            //         size: 220,
-                            //         color: Colors.red,
-                            //       ),
-                            //     );
-                            //   },
-                            // )
-                            //     :
-                            // Image.asset(
-                            //   'assets/images/store.png',
-                            //   fit: BoxFit.contain,
-                            //   width: 220,
-                            //   height: 300,),
                             ),
                           ),
                         ),

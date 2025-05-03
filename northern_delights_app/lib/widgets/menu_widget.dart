@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -187,13 +188,12 @@ class _MenuDetailsState extends State<MenuDetails> {
                           const Spacer(), // Pushes the image to the far right
                           // Image
                           menu['photo'] != null && menu['photo'].toString().isNotEmpty
-                          ? Image.network(
-                            menu['photo'],
+                          ? CachedNetworkImage(imageUrl: menu['photo'],
                             fit: BoxFit.contain,
                             alignment: Alignment.center,
                             width: 100,
                             height: 100,
-                            errorBuilder: (context, error, stackTrace) {
+                            errorWidget: (context, url, error) {
                               return Container(
                                 alignment: Alignment.center,
                                 child: const Icon(
@@ -203,8 +203,7 @@ class _MenuDetailsState extends State<MenuDetails> {
                                 ),
                               );
                             },
-                          ) 
-                              : Image.asset('assets/images/meal-menu.png', fit: BoxFit.contain, width: 60, height: 60,),
+                          ) : Image.asset('assets/images/meal-menu.png', fit: BoxFit.contain, width: 60, height: 60,),
                         ],
                       ),
                     ),

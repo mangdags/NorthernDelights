@@ -22,31 +22,31 @@ late Timestamp closingTime;
 late TimeOfDay openTimeOfDay;
 late TimeOfDay closeTimeOfDay;
 
-class GastropubInfo extends StatefulWidget {
-  const GastropubInfo({
-    required this.gastropubID,
+class SinanglaoEmpanadaInfo extends StatefulWidget {
+  const SinanglaoEmpanadaInfo({
+    required this.storeID,
     required this.isRegular,
     required this.isAdmin,
     super.key,
   });
 
-  final String gastropubID;
+  final String storeID;
   final bool isRegular;
   final bool isAdmin;
 
   @override
-  _GastropubInfoState createState() => _GastropubInfoState();
+  _SinanglaoEmpanadaInfoState createState() => _SinanglaoEmpanadaInfoState();
 }
 
-class _GastropubInfoState extends State<GastropubInfo> {
+class _SinanglaoEmpanadaInfoState extends State<SinanglaoEmpanadaInfo> {
   final ScrollController _scrollController = ScrollController();
   bool _showCircularButton = false;
   bool _showFullHeight = false;
   Tab selectedTab =Tab.Overview; // default tab
 
-  double? gastroLat;
-  double? gastroLong;
-  String? gastroName;
+  double? storeLat;
+  double? storeLong;
+  String? storeName;
 
 
   @override
@@ -58,29 +58,45 @@ class _GastropubInfoState extends State<GastropubInfo> {
       });
     });
     _incrementViewCount();
-    updateAverageRating(widget.gastropubID);
+    updateAverageRating(widget.storeID);
   }
 
-  void _incrementViewCount() async {
+  Future<void> _incrementViewCount() async {
     try {
+      final storeType = await getStoreType(); // <-- await here
       await FirebaseFirestore.instance
-          .collection('gastropubs')
-          .doc(widget.gastropubID)
+          .collection(storeType)
+          .doc(widget.storeID)
           .update({
         'view_count': FieldValue.increment(1),
       });
     } catch (e) {
-      print('Error incrementing view count: $e'); //for debugging only
+      print('Error incrementing view count: $e');
     }
   }
+
 
   void _updateCoordinates(double lat, double long) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
-        gastroLat = lat;
-        gastroLong = long;
+        storeLat = lat;
+        storeLong = long;
       });
     });
+  }
+
+  Future<String> getStoreType() async {
+    final docSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.storeID)
+        .get();
+
+    if (docSnapshot.exists) {
+      final data = docSnapshot.data() as Map<String, dynamic>;
+      return data['store_type'] ?? '';
+    } else {
+      return '';
+    }
   }
 
   @override
@@ -89,93 +105,121 @@ class _GastropubInfoState extends State<GastropubInfo> {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          StreamBuilder<DocumentSnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('restaurants')
-                .doc(widget.gastropubID)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return Center(child: CircularProgressIndicator());
+          FutureBuilder<String>(
+            future: getStoreType(),
+            builder: (context, storeTypeSnapshot) {
+              final storeTypeState = storeTypeSnapshot.connectionState;
+
+              if (storeTypeState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
               }
 
-              var data = snapshot.data!.data();
-              if (data == null) {
-                return Center(child: Text('No data found.'));
+              if (storeTypeSnapshot.hasError) {
+                return Center(child: Text('Something went wrong. Please try again.'));
               }
 
-              var gastro = snapshot.data!.data() as Map<String, dynamic>;
-              String gastroOverview = gastro['overview'] ?? '';
-              gastroName = gastro['name'];
+              final storeType = storeTypeSnapshot.data;
 
-              return SingleChildScrollView(
-                controller: _scrollController,
-                child: Column(
-                  children: [
-                    FoodPlaceInfoWidget(
-                      gastroID: widget.gastropubID,
-                      onLocationUpdated: _updateCoordinates, // Pass the callback
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              if (storeType == null || storeType.isEmpty) {
+                return Center(child: Text('Store type not found.'));
+              }
+
+              return StreamBuilder<DocumentSnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection(storeType)
+                    .doc(widget.storeID)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error loading store info.'));
+                  }
+
+                  if (!snapshot.hasData || !snapshot.data!.exists) {
+                    return Center(child: Text('No data found.'));
+                  }
+
+                  var gastro = snapshot.data!.data() as Map<String, dynamic>;
+                  String gastroOverview = gastro['overview'] ?? '';
+                  storeName = gastro['name'];
+
+                  return SingleChildScrollView(
+                    controller: _scrollController,
+                    child: Column(
                       children: [
-                        TextButton(
-                          onPressed: () => setState(() => selectedTab = Tab.Overview),
-                          style: ButtonStyle(
-                            foregroundColor: WidgetStateProperty.all(
-                                selectedTab == Tab.Overview ? Colors.black : Colors.black45),
-                            textStyle: WidgetStateProperty.all(
-                              TextStyle(fontSize: selectedTab == Tab.Overview ? 20 : 18),
-                            ),
-                          ),
-                          child: Text('Overview'),
+                        FoodPlaceInfoWidget(
+                          storeID: widget.storeID,
+                          onLocationUpdated: _updateCoordinates,
+                          storeType: storeType, // <-- use fetched storeType here
                         ),
-                        TextButton(
-                          onPressed: () => setState(() => selectedTab = Tab.Menu),
-                          style: ButtonStyle(
-                            foregroundColor: WidgetStateProperty.all(
-                                selectedTab == Tab.Menu ? Colors.black : Colors.black45),
-                            textStyle: WidgetStateProperty.all(
-                              TextStyle(fontSize: selectedTab == Tab.Menu ? 20 : 18),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            TextButton(
+                              onPressed: () => setState(() => selectedTab = Tab.Overview),
+                              style: ButtonStyle(
+                                foregroundColor: WidgetStateProperty.all(
+                                    selectedTab == Tab.Overview ? Colors.black : Colors.black45),
+                                textStyle: WidgetStateProperty.all(
+                                  TextStyle(fontSize: selectedTab == Tab.Overview ? 20 : 18),
+                                ),
+                              ),
+                              child: Text('Overview'),
                             ),
-                          ),
-                          child: Text('Menu'),
-                        ),
-                        TextButton(
-                          onPressed: () => setState(() => selectedTab = Tab.Review),
-                          style: ButtonStyle(
-                            foregroundColor: WidgetStateProperty.all(
-                                selectedTab == Tab.Review ? Colors.black : Colors.black45),
-                            textStyle: WidgetStateProperty.all(
-                              TextStyle(fontSize: selectedTab == Tab.Review ? 20 : 18),
+                            TextButton(
+                              onPressed: () => setState(() => selectedTab = Tab.Menu),
+                              style: ButtonStyle(
+                                foregroundColor: WidgetStateProperty.all(
+                                    selectedTab == Tab.Menu ? Colors.black : Colors.black45),
+                                textStyle: WidgetStateProperty.all(
+                                  TextStyle(fontSize: selectedTab == Tab.Menu ? 20 : 18),
+                                ),
+                              ),
+                              child: Text('Menu'),
                             ),
-                          ),
-                          child: Text('Review'),
+                            TextButton(
+                              onPressed: () => setState(() => selectedTab = Tab.Review),
+                              style: ButtonStyle(
+                                foregroundColor: WidgetStateProperty.all(
+                                    selectedTab == Tab.Review ? Colors.black : Colors.black45),
+                                textStyle: WidgetStateProperty.all(
+                                  TextStyle(fontSize: selectedTab == Tab.Review ? 20 : 18),
+                                ),
+                              ),
+                              child: Text('Review'),
+                            ),
+                          ],
                         ),
+                        if (selectedTab == Tab.Overview) _buildText(gastroOverview),
+                        if (selectedTab == Tab.Menu) _menuDetails(storeType),
+                        if (selectedTab == Tab.Review) ...[
+                          _reviewDetails(storeType),
+                          if (widget.isRegular && !widget.isAdmin) ...[
+                            const SizedBox(height: 20),
+                            ElevatedButton(
+                              onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => LeaveReviewScreen(
+                                    collectionType: storeType, // <-- use fetched storeType here
+                                    restaurantGastropubId: widget.storeID,
+                                  ),
+                                ),
+                              ).then((_) {
+                                getUserPoints();
+                              }),
+                              child: Text('Add Review'),
+                            ),
+                          ],
+                        ],
+                        const SizedBox(height: 100),
                       ],
                     ),
-                    if (selectedTab == Tab.Overview) _buildText(gastroOverview),
-                    if (selectedTab == Tab.Menu) _menuDetails(),
-                    if (selectedTab == Tab.Review) ... [
-                      _reviewDetails(),
-                      if(widget.isRegular && !widget.isAdmin) ... [
-                        const SizedBox(height: 20,),
-
-
-                        ElevatedButton(onPressed: () => Navigator.push(
-                            context, MaterialPageRoute(builder: (context) =>
-                            LeaveReviewScreen(collectionType: 'gastropubs', restaurantGastropubId: widget.gastropubID)))
-                          .then((_) {
-                            getUserPoints();
-                          }),
-                          child: Text('Add Review'),),
-                      ],
-                    ],
-
-                    const SizedBox(height: 100),
-                    //Prevent clipping
-                  ],
-                ),
+                  );
+                },
               );
             },
           ),
@@ -191,14 +235,14 @@ class _GastropubInfoState extends State<GastropubInfo> {
                 child: FloatingActionButton(
                   backgroundColor: Colors.black,
                   onPressed: () {
-                    if (gastroLat != null && gastroLong != null) {
+                    if (storeLat != null && storeLong != null) {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => DirectionsMapScreen(
-                            destinationLat: gastroLat!,
-                            destinationLong: gastroLong!,
-                            destinationName: gastroName!,
+                            destinationLat: storeLat!,
+                            destinationLong: storeLong!,
+                            destinationName: storeName!,
                           ),
                         ),
                       );
@@ -218,25 +262,25 @@ class _GastropubInfoState extends State<GastropubInfo> {
     );
   }
 
-  SizedBox _reviewDetails() {
+  SizedBox _reviewDetails(String storeType) {
     return SizedBox(
       child: ReviewsDetails(
-          foodPlaceID: widget.gastropubID,
-          foodPlaceCategory: 'gastropubs'
+        foodPlaceID: widget.storeID,
+        foodPlaceCategory: storeType, // <-- use the fetched storeType
       ),
     );
   }
 
-
-  SizedBox _menuDetails() {
+  SizedBox _menuDetails(String storeType) {
     return SizedBox(
       height: 600,
       child: MenuDetails(
-          foodPlaceID: widget.gastropubID,
-          foodPlaceCategory: 'gastropubs'
+        foodPlaceID: widget.storeID,
+        foodPlaceCategory: storeType,
       ),
     );
   }
+
 
   Widget _buildFullWidthButton() {
     return Padding(
@@ -245,14 +289,14 @@ class _GastropubInfoState extends State<GastropubInfo> {
         width: double.infinity,
         child: ElevatedButton(
           onPressed: () {
-            if (gastroLat != null && gastroLong != null) {
+            if (storeLat != null && storeLong != null) {
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => DirectionsMapScreen(
-                    destinationLat: gastroLat!,
-                    destinationLong: gastroLong!,
-                    destinationName: gastroName!,
+                    destinationLat: storeLat!,
+                    destinationLong: storeLong!,
+                    destinationName: storeName!,
                   ),
                 ),
               );
@@ -291,15 +335,16 @@ class _GastropubInfoState extends State<GastropubInfo> {
     final firestore = FirebaseFirestore.instance;
 
     try {
+      final storeType = await getStoreType(); // <-- await here
       final reviewsCollection = firestore
-          .collection('gastropubs')
+          .collection(storeType)
           .doc(docId)
           .collection('reviews');
 
       final querySnapshot = await reviewsCollection.get();
 
       if (querySnapshot.docs.isEmpty) {
-        await firestore.collection('gastropubs').doc(docId).update({'rating': 0.00});
+        await firestore.collection(storeType).doc(docId).update({'rating': 0.00});
         return;
       }
 
@@ -314,7 +359,7 @@ class _GastropubInfoState extends State<GastropubInfo> {
       final formattedRating = double.parse(averageRating.toStringAsFixed(1));
 
       await firestore
-          .collection('gastropubs')
+          .collection(storeType)
           .doc(docId)
           .update({'rating': formattedRating});
 
@@ -322,6 +367,7 @@ class _GastropubInfoState extends State<GastropubInfo> {
       print('Error updating rating: $e');
     }
   }
+
 
   Widget _buildText(String gastroOverview) {
     return Padding(
@@ -340,13 +386,15 @@ class _GastropubInfoState extends State<GastropubInfo> {
 
 class FoodPlaceInfoWidget extends StatelessWidget {
   const FoodPlaceInfoWidget({
-    required this.gastroID,
+    required this.storeID,
     required this.onLocationUpdated, // Accept the callback
+    required this.storeType,
     super.key,
   });
 
-  final String gastroID;
+  final String storeID;
   final Function(double lat, double long) onLocationUpdated; // Callback definition
+  final String storeType;
 
   String convertToDateString(TimeOfDay? timeOfDay) {
 
@@ -369,8 +417,8 @@ class FoodPlaceInfoWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance
-          .collection('gastropubs')
-          .doc(gastroID)
+          .collection(storeType)
+          .doc(storeID)
           .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
@@ -381,7 +429,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
           return Center(child: Text('No data found.'));
         }
 
-        var gastro = snapshot.data!.data() as Map<String, dynamic>;
+        var store = snapshot.data!.data() as Map<String, dynamic>;
         screenWidth = MediaQuery
             .of(context)
             .size
@@ -392,13 +440,13 @@ class FoodPlaceInfoWidget extends StatelessWidget {
             .height;
 
 
-        openingTime = gastro['open_time'];
-        closingTime = gastro['close_time'];
+        openingTime = store['open_time'];
+        closingTime = store['close_time'];
 
         openTimeOfDay = convertToTimeOfDay(openingTime);
         closeTimeOfDay = convertToTimeOfDay(closingTime);
 
-        GeoPoint geoPoint = gastro['geopoint'];
+        GeoPoint geoPoint = store['geopoint'];
         double lat = geoPoint.latitude;
         double long = geoPoint.longitude;
 
@@ -430,7 +478,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(20),
                     child: FutureBuilder<DocumentSnapshot>(
-                      future: FirebaseFirestore.instance.collection('users').doc(gastroID).get(),
+                      future: FirebaseFirestore.instance.collection('users').doc(storeID).get(),
                       builder: (context, userSnapshot) {
                         if (!userSnapshot.hasData) {
                           return Center(child: CircularProgressIndicator());
@@ -450,19 +498,19 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                             ),
                             items: imageUrls.map((url) {
                               return CachedNetworkImage(
-                                  imageUrl: url,
-                                  fit: BoxFit.cover,
-                                  width: MediaQuery.of(context).size.width,
-                                  errorWidget: (context, error, stackTrace) => Container(
-                                    alignment: Alignment.center,
-                                    color: Colors.grey[200],
-                                    child: Image.asset(
-                                        'assets/images/store.png',
-                                        fit: BoxFit.contain,
-                                        width: 220,
-                                        height: 350),
-                                  ),
-                                  placeholder: (context, url) => Center(
+                                imageUrl: url,
+                                fit: BoxFit.cover,
+                                width: MediaQuery.of(context).size.width,
+                                errorWidget: (context, error, stackTrace) => Container(
+                                  alignment: Alignment.center,
+                                  color: Colors.grey[200],
+                                  child: Image.asset(
+                                      'assets/images/store.png',
+                                      fit: BoxFit.contain,
+                                      width: 220,
+                                      height: 350),
+                                ),
+                                placeholder: (context, url) => Center(
                                   child: CircularProgressIndicator(),),
                               );
                             }).toList(),
@@ -479,7 +527,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                     ),
                   ),
                 ),
-          
+
                 Positioned(
                   bottom: 15,
                   child: ClipRRect(
@@ -500,18 +548,18 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  gastro['name'],
+                                  store['name'],
                                   style: const TextStyle(
                                     fontSize: 23,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                   ),
                                 ),
-                            
+
                                 const SizedBox(height: 5,),
-                            
+
                                 FutureBuilder<String>(
-                                  future: UserService.getSellerName(gastroID),
+                                  future: UserService.getSellerName(storeID),
                                   builder: (context, snapshot) {
                                     if (snapshot.hasData) {
                                       return Text(snapshot.data!, style: TextStyle(color: Colors.white),);
@@ -520,7 +568,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                                     }
                                   },
                                 ),
-                            
+
                                 const SizedBox(height: 5),
                                 Row(
                                   children: [
@@ -536,7 +584,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                                       child: Text(
                                         overflow: TextOverflow.fade,
                                         maxLines: 2,
-                                        gastro['location'],
+                                        store['location'],
                                         style: TextStyle(
                                           color: Colors.white70,
                                           fontSize: 16,
@@ -558,7 +606,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                                     ),
                                     SizedBox(width: 8),
                                     Text(
-                                      gastro['rating'].toString(),
+                                      store['rating'].toString(),
                                       style: TextStyle(
                                         color: Colors.white70,
                                         fontSize: 16,
@@ -570,7 +618,7 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                                 Row(
                                   children: [
                                     Icon(Icons.access_time_outlined, color: Colors.white70,size: 16),
-                                      
+
                                     SizedBox(width: 8),
                                     Text(
                                       convertToDateString(openTimeOfDay),

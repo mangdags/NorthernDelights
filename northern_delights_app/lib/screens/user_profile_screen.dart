@@ -305,7 +305,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       for (int i = 0; i < _selectedImages.length; i++) {
         final folder = widget.userId;
         final originalFile = File(_selectedImages[i].path); // ✅ Convert XFile to File
-        final fileName = '${widget.userId}_$i.jpg';
+        final fileName = '${widget.userId}_${DateTime.now()}_$i.jpg';
         final storageRef = _storage.ref().child('$storeType/$folder/$fileName');
 
         // Compress image

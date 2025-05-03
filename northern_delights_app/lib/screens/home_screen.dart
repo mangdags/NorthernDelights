@@ -15,6 +15,7 @@ import 'package:northern_delights_app/widgets/gastropub_card.dart';
 import 'package:northern_delights_app/widgets/restaurant_card.dart';
 import 'package:northern_delights_app/widgets/category_button.dart';
 import 'package:northern_delights_app/widgets/restaurant_card_search.dart';
+import 'package:northern_delights_app/widgets/sinanglao_empanada_card.dart';
 
 import '../models/update_average_rating.dart';
 import '../widgets/gastropub_card_search.dart';
@@ -194,9 +195,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       )),
                 ),
                 const SizedBox(height: 20),
-                SizedBox(
-                  height: 320,
-                  child: GastropubCards(isRegular: !isSeller, isAdmin: isAdmin, selectedCategory: _selectedCategory),
+                Offstage(
+                  offstage: (_selectedCategory == 'Empanada' || _selectedCategory == 'Sinanglao'),
+                  child: SizedBox(
+                    height: 320,
+                    child: GastropubCards(isRegular: !isSeller, isAdmin: isAdmin, selectedCategory: _selectedCategory),
+                  ),
                 ),
                 SizedBox(height: 5),
                 Offstage(
@@ -216,6 +220,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: RestaurantsCard(isRegular: !isSeller, isAdmin: isAdmin, selectedCategory: _selectedCategory),
                   ),
                 ),
+                SizedBox(
+                  height: 320,
+                  child: SinanglaoEmpanadaCards(selectedCategory: _selectedCategory, isRegular: !isSeller, isAdmin: isAdmin),
+                )
               ],
             ),
           ),

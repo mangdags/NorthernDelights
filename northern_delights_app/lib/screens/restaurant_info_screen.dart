@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -440,19 +441,21 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                               autoPlay: true,
                             ),
                             items: imageUrls.map((url) {
-                              return Image.network(
-                                url,
-                                fit: BoxFit.cover,
-                                width: MediaQuery.of(context).size.width,
-                                errorBuilder: (context, error, stackTrace) => Container(
-                                  alignment: Alignment.center,
-                                  color: Colors.grey[200],
-                                  child: Image.asset(
-                                      'assets/images/store.png',
-                                      fit: BoxFit.contain,
-                                      width: 220,
-                                      height: 350),
-                                ),
+                              return CachedNetworkImage(
+                                  imageUrl: url,
+                                  fit: BoxFit.cover,
+                                  width: MediaQuery.of(context).size.width,
+                                  errorWidget: (context, url, error) => Container(
+                                    alignment: Alignment.center,
+                                    color: Colors.grey[200],
+                                    child: Image.asset(
+                                        'assets/images/store.png',
+                                        fit: BoxFit.contain,
+                                        width: 220,
+                                        height: 350),
+                                  ),
+                                  placeholder: (context, url) => Center(
+                                  child: CircularProgressIndicator())
                               );
                             }).toList(),
                           );

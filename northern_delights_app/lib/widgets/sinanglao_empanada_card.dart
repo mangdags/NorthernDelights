@@ -4,21 +4,22 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:northern_delights_app/models/gastropub_doc_data.dart';
-import 'package:northern_delights_app/screens/gastropub_info_screen.dart';
 
-class GastropubCardSearch extends StatefulWidget {
-  final String? searchKeyword;
+import '../screens/sinanglao_empanada_info_screen.dart';
+
+class SinanglaoEmpanadaCards extends StatefulWidget {
+  final String selectedCategory;
   final bool isRegular;
   final bool isAdmin;
 
-  const GastropubCardSearch({super.key, required this.searchKeyword, required this.isRegular, required this.isAdmin});
+  const SinanglaoEmpanadaCards({super.key, required this.selectedCategory, required this.isRegular, required this.isAdmin});
 
   @override
-  _GastropubCardSearchState createState() => _GastropubCardSearchState();
+  _SinanglaoEmpanadaCardsState createState() => _SinanglaoEmpanadaCardsState();
 }
 
-class _GastropubCardSearchState extends State<GastropubCardSearch> {
-  final GastropubSearch gastropubSearch = GastropubSearch();
+class _SinanglaoEmpanadaCardsState extends State<SinanglaoEmpanadaCards> {
+  final GastropubService sinanglaoEmpanadaService = GastropubService();
 
   late Timestamp openingTime;
   late Timestamp closingTime;
@@ -62,15 +63,15 @@ class _GastropubCardSearchState extends State<GastropubCardSearch> {
       children: [
         StreamBuilder<List<Map<String, dynamic>>>(
           // Update the stream based on the selected category
-          stream: gastropubSearch.getGastroSearchOr(keyword: widget.searchKeyword),
+          stream: sinanglaoEmpanadaService.getStream(widget.selectedCategory),
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
               return Center(child: CircularProgressIndicator());
             }
 
-            var gastropubList = snapshot.data!.map((gastropub) {
-              openingTime = gastropub['open_time'];
-              closingTime = gastropub['close_time'];
+            var storeList = snapshot.data!.map((store) {
+              openingTime = store['open_time'];
+              closingTime = store['close_time'];
 
               openTimeOfDay = convertToTimeOfDay(openingTime);
               closeTimeOfDay = convertToTimeOfDay(closingTime);
@@ -80,10 +81,10 @@ class _GastropubCardSearchState extends State<GastropubCardSearch> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => GastropubInfo(
+                      builder: (context) => SinanglaoEmpanadaInfo(
                         isRegular: widget.isRegular,
                         isAdmin: widget.isAdmin,
-                        gastropubID: gastropub['id'],
+                        storeID: store['id'],
 
                       ),
                     ),
@@ -109,7 +110,7 @@ class _GastropubCardSearchState extends State<GastropubCardSearch> {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(20),
                             child: FutureBuilder<DocumentSnapshot>(
-                              future: FirebaseFirestore.instance.collection('users').doc(gastropub['id']).get(),
+                              future: FirebaseFirestore.instance.collection('users').doc(store['id']).get(),
                               builder: (context, userSnapshot) {
                                 if (!userSnapshot.hasData) {
                                   return Center(child: CircularProgressIndicator());
@@ -191,7 +192,7 @@ class _GastropubCardSearchState extends State<GastropubCardSearch> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      gastropub['name'],
+                                      store['name'],
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
@@ -214,7 +215,7 @@ class _GastropubCardSearchState extends State<GastropubCardSearch> {
                                           child: Text(
                                             overflow: TextOverflow.fade,
                                             maxLines: 1,
-                                            gastropub['location'],
+                                            store['location'],
                                             style: TextStyle(
                                               color: Colors.white70,
                                               fontSize: 12,
@@ -235,7 +236,7 @@ class _GastropubCardSearchState extends State<GastropubCardSearch> {
                                         ),
                                         SizedBox(width: 8),
                                         Text(
-                                          gastropub['rating'].toString(),
+                                          store['rating'].toString(),
                                           style: TextStyle(
                                             color: Colors.white70,
                                             fontSize: 12,
@@ -291,7 +292,7 @@ class _GastropubCardSearchState extends State<GastropubCardSearch> {
               height: 320,
               child: ListView(
                 scrollDirection: Axis.horizontal,
-                children: gastropubList.map((item) => Padding(
+                children: storeList.map((item) => Padding(
                   padding: EdgeInsets.only(right: 25.0),
                   child: item,
                 )).toList(),

@@ -10,4 +10,15 @@ class MenuDocData {
         .map((snapshot) =>
         snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList());
   }
+
+
+  Stream<List<Map<String, dynamic>>> fetchSideData(String id, String category) {
+    return FirebaseFirestore.instance
+        .collection(category)
+        .doc(id)
+        .collection('sidedish')
+        .snapshots()
+        .map((snapshot) =>
+        snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList());
+  }
 }

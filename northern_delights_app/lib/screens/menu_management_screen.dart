@@ -22,6 +22,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
   List<Map<String, dynamic>> menuItems = [];
+  List<Map<String, dynamic>> sideItem = [];
   String? collectionType;
   String? _imageName;
   late String _storeName;
@@ -50,13 +51,17 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   }
 
   Future<void> _fetchMenuData() async {
-    final gastropubData = await _getCollectionData('gastropubs');
-    final restaurantData = await _getCollectionData('restaurants');
+    final gastropubData = await _getCollectionData('gastropubs', false);
+    final gastropubSideData = await _getCollectionData('gastropubs', true);
+
+    final restaurantData = await _getCollectionData('restaurants', false);
+    final restaurantSideData = await _getCollectionData('restaurants', true);
 
     if(_storeType == 'gastropubs') {
       setState(() {
         collectionType = 'gastropubs';
         menuItems = gastropubData ?? [];
+        sideItem = gastropubSideData ?? [];
       });
     }
 
@@ -64,6 +69,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       setState(() {
         collectionType = 'restaurants';
         menuItems = restaurantData ?? [];
+        sideItem = restaurantSideData ?? [];
       });
     } else if (_storeType == 'restaurants') {
       setState(() {
@@ -106,18 +112,32 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     }
   }
 
-  Future<List<Map<String, dynamic>>?> _getCollectionData(String collection) async {
+  Future<List<Map<String, dynamic>>?> _getCollectionData(String collection, bool isSideDish) async {
     try {
       final snapshot = await FirebaseFirestore.instance
           .collection(collection).doc(widget.userId)
           .get();
 
-      if (snapshot.exists) {
+      if (snapshot.exists && !isSideDish) {
         final docId = snapshot.id;
         final menuSnapshot = await FirebaseFirestore.instance
             .collection(collection)
             .doc(docId)
             .collection('menu')
+            .get();
+
+        // Include 'id' in each menu item for future reference
+        return menuSnapshot.docs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          data['id'] = doc.id; // Add the document ID
+          return data;
+        }).toList();
+      } else if(snapshot.exists && isSideDish) {
+        final docId = snapshot.id;
+        final menuSnapshot = await FirebaseFirestore.instance
+            .collection(collection)
+            .doc(docId)
+            .collection('sidedish')
             .get();
 
         // Include 'id' in each menu item for future reference
@@ -134,7 +154,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   }
 
 
-  Future<void> _addMenuItem(String name, double price, String description) async
+  Future<void> _addMainDishItem(String name, double price, String description) async
   {
     if (_selectedImage != null) {
       final fileSize = await _selectedImage?.length();
@@ -146,16 +166,37 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       }
       if(_storeType == 'gastropubs')
       {
-        await _addMenuOnCollection(FirebaseFirestore.instance.collection('gastropubs'), name, price, description);
+        await _addMenuOnCollection(FirebaseFirestore.instance.collection('gastropubs'), name, price, description, false);
 
       } else if(_storeType == 'restaurants') {
-        await _addMenuOnCollection(FirebaseFirestore.instance.collection('restaurants'), name, price, description);
+        await _addMenuOnCollection(FirebaseFirestore.instance.collection('restaurants'), name, price, description, false);
       }
 
     }
   }
 
-  Future<void> _addMenuOnCollection(CollectionReference<Map<String, dynamic>> collectionRef, String name, double price, String description) async
+  Future<void> _addSideDishItem(String name, double price, String description) async
+  {
+    if (_selectedImage != null) {
+      final fileSize = await _selectedImage?.length();
+      if(fileSize! > 3000000) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Image size exceeds 3MB')),
+        );
+        return;
+      }
+      if(_storeType == 'gastropubs')
+      {
+        await _addMenuOnCollection(FirebaseFirestore.instance.collection('gastropubs'), name, price, description, true);
+
+      } else if(_storeType == 'restaurants') {
+        await _addMenuOnCollection(FirebaseFirestore.instance.collection('restaurants'), name, price, description, true);
+      }
+
+    }
+  }
+
+  Future<void> _addMenuOnCollection(CollectionReference<Map<String, dynamic>> collectionRef, String name, double price, String description, bool isSideDish) async
   {
     final docRef = await collectionRef.doc(widget.userId);
     final docSnapshot = await docRef.get();
@@ -163,12 +204,16 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     if (docSnapshot.exists) {
       final docId = docSnapshot.id;
       final menuCollectionRef = collectionRef.doc(docId).collection('menu');
+      final sideDishCollectionRef = collectionRef.doc(docId).collection('sidedish');
 
       // Add item and get its document reference
-      final newMenuItemRef = await menuCollectionRef.add({'name': name, 'price': price, 'photo': '', 'description': description});
+      final newMenuItemRef = isSideDish ?  await sideDishCollectionRef.add({'name': name, 'price': price, 'photo': '', 'description': description})
+      : await menuCollectionRef.add({'name': name, 'price': price, 'photo': '', 'description': description});
       final menuItemId = newMenuItemRef.id;
 
-      await _uploadImage(menuItemId);
+      await _uploadImage(menuItemId, isSideDish);
+
+      print('ADD: $isSideDish, $sideDishCollectionRef');
     }
 
     // Refresh menu items
@@ -216,10 +261,17 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Manage Menu")),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text('Main Dish', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            ),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(), // prevent conflict with parent scroll
               itemCount: menuItems.length,
               itemBuilder: (context, index) {
                 final menuItem = menuItems[index];
@@ -231,9 +283,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                     children: [
                       IconButton(
                         icon: Icon(Icons.edit),
-                        onPressed: () {
-                          _showEditDialog(menuItem);
-                          },
+                        onPressed: () => _showEditDialog(menuItem),
                       ),
                       IconButton(
                         icon: Icon(Icons.delete),
@@ -244,23 +294,67 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                 );
               },
             ),
+            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text('Side Dish', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            ),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              itemCount: sideItem.length,
+              itemBuilder: (context, index) {
+                final menuItem = sideItem[index];
+                return ListTile(
+                  title: Text(menuItem['name'] ?? 'No Name'),
+                  subtitle: Text("Price: Php${menuItem['price'] ?? 0.0}"),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.edit),
+                        onPressed: () => _showEditDialog(menuItem),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.delete),
+                        onPressed: () => _deleteMenuItem(menuItem['id']),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            SizedBox(height: 100), // extra padding so FAB doesn’t overlap last item
+          ],
+        ),
+      ),
+
+      floatingActionButton: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton.extended(
+            onPressed: () {
+              _showAddMainDishDialog();
+            },
+            icon: Icon(Icons.add),
+            label: Text('Main Dish'),
           ),
-          // ElevatedButton(
-          //   onPressed: () => _showAddDialog(),
-          //   child: const Text("Add Menu Item"),
-          //),
+          const SizedBox(width: 10),
+          FloatingActionButton.extended(
+            onPressed: () {
+              _showAddSideDishDialog();
+            },
+            icon: Icon(Icons.add),
+            label: Text('Side Dish'),
+          ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _showAddDialog();
-        },
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
-  void _showAddDialog() {
+  void _showAddMainDishDialog() {
     _imageName = '';
     double price = 0.0;
     String description = '';
@@ -337,12 +431,121 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                   onPressed: isUploading
                       ? null
                       : (){
-                        _addMenuItem(_imageName!, price, description);
-                        Navigator.of(context).pop();
+                        if(_imageName == null) {
+                          print('NO IMAGE');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please add image first!')),
+                          );
+                        } else {
+                          _addMainDishItem(_imageName!, price, description);
+                          Navigator.of(context).pop();
+                        }
+
+
                       },
                   child: isUploading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Add'),
+                      : const Text('Add Main Dish'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+
+  void _showAddSideDishDialog() {
+    _imageName = '';
+    double price = 0.0;
+    String description = '';
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, void Function(void Function()) setStateDialog) {
+            return AlertDialog(
+              title: const Text("Add Side Dish"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () async {
+                      await _pickImage();
+                      setStateDialog(() {});
+                    },
+                    child: CircleAvatar(
+                      key: ValueKey(_selectedImage?.path),
+                      radius: 25,
+                      backgroundImage: _selectedImage != null
+                          ? FileImage(_selectedImage!)
+                          : (_imageURL != null ? NetworkImage(_imageURL!) : null),
+                      child: _selectedImage == null && _imageURL == null
+                          ? const Icon(Icons.camera_alt, size: 40)
+                          : null,
+                    ),
+                  ),
+                  TextField(
+                    decoration: const InputDecoration(labelText: "Name"),
+                    onChanged: (value) => _imageName = value,
+                  ),
+                  TextField(
+                    decoration: const InputDecoration(labelText: "Price"),
+                    keyboardType: TextInputType.number,
+                    onChanged: (value) => price = double.tryParse(value) ?? 0.0,
+                  ),
+
+                  Container(
+                    height: 150, // Set a fixed height to enable scrolling
+                    padding: EdgeInsets.all(8),
+                    child: Scrollbar(
+                      thumbVisibility: true,
+                      controller: _scrollController,
+                      child: SingleChildScrollView(
+                        controller: _scrollController,
+                        child: TextField(
+                          controller: _descController,
+                          keyboardType: TextInputType.multiline,
+                          maxLines: null,
+                          minLines: 5,
+                          onChanged: (value) => description = value,
+                          decoration: InputDecoration(
+                            labelText: "Description",
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: isUploading
+                      ? null
+                      : (){
+                        if(_imageName == null) {
+                          print('NO IMAGE');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please add image first!')),
+                          );
+                        } else {
+                          _addSideDishItem(_imageName!, price, description);
+                          Navigator.of(context).pop();
+                        }
+                  },
+                  child: isUploading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Add Side Dish'),
                 ),
               ],
             );
@@ -363,7 +566,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   }
 
 
-  Future<void> _uploadImage(String menuItemId) async {
+  Future<void> _uploadImage(String menuItemId, bool isSideDish) async {
     if (_selectedImage == null || isUploading) return;
 
     setState(() {
@@ -375,15 +578,23 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       // Upload Image
       final fileName = '$_imageName.png';
       final storageRef = _storage.ref().child('$_storeType/menu/$_storeName/$fileName');
+      final sideDishRef = _storage.ref().child('$_storeType/sidedish/$_storeName/$fileName');
 
-      final uploadTask = await storageRef.putFile(_selectedImage!);
+      final uploadTask = isSideDish ? await sideDishRef.putFile(_selectedImage!) : await storageRef.putFile(_selectedImage!);
       final imageUrl = await uploadTask.ref.getDownloadURL();
 
       setState(() {
         _imageURL = imageUrl;
       });
 
-      await _firestore
+      isSideDish ?
+        await _firestore
+          .collection(_storeType)
+          .doc(widget.userId)
+          .collection('sidedish')
+          .doc(menuItemId)
+          .update({'photo': _imageURL})
+      : await _firestore
         .collection(_storeType)
         .doc(widget.userId)
         .collection('menu')

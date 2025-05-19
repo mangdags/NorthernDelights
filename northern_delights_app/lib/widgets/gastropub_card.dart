@@ -16,12 +16,50 @@ class GastropubCards extends StatefulWidget {
 class _GastropubCardsState extends State<GastropubCards> {
     final GastropubService gastropubService = GastropubService();
 
+<<<<<<< Updated upstream
+=======
+    late Timestamp openingTime;
+    late Timestamp closingTime;
+    late TimeOfDay openTimeOfDay;
+    late TimeOfDay closeTimeOfDay;
+    final now = TimeOfDay.now();
+
+    String convertToDateString(TimeOfDay? timeOfDay) {
+
+        if (timeOfDay == null) {
+            return '00:00';
+        }
+        final hours = timeOfDay.hourOfPeriod;
+        final minutes = timeOfDay.minute;
+        final period = timeOfDay.period == DayPeriod.am ? 'AM' : 'PM';
+
+        return '$hours:${minutes.toString().padLeft(2, '0')} $period';
+    }
+
+    TimeOfDay convertToTimeOfDay(Timestamp timestamp) {
+        final dateTime = timestamp.toDate();
+        return TimeOfDay(hour: dateTime.hour, minute: dateTime.minute);
+    }
+
+    bool isStoreClosed(TimeOfDay open, TimeOfDay close, TimeOfDay now) {
+        final currentMinutes = now.hour * 60 + now.minute;
+        final openMinutes = open.hour * 60 + open.minute;
+        final closeMinutes = close.hour * 60 + close.minute;
+
+        if (closeMinutes > openMinutes) {
+            return !(currentMinutes >= openMinutes && currentMinutes < closeMinutes);
+        } else {
+            return !(currentMinutes >= openMinutes || currentMinutes < closeMinutes);
+        }
+    }
+
+
+>>>>>>> Stashed changes
     @override
     Widget build(BuildContext context) {
         return Column(
             children: [
                 StreamBuilder<List<Map<String, dynamic>>>(
-                    // Update the stream based on the selected category
                     stream: gastropubService.getStream(widget.selectedCategory),
                     builder: (context, snapshot) {
                         if (!snapshot.hasData) {
@@ -29,6 +67,15 @@ class _GastropubCardsState extends State<GastropubCards> {
                         }
 
                         var gastropubList = snapshot.data!.map((gastropub) {
+<<<<<<< Updated upstream
+=======
+                            openingTime = gastropub['open_time'];
+                            closingTime = gastropub['close_time'];
+
+                            openTimeOfDay = convertToTimeOfDay(openingTime);
+                            closeTimeOfDay = convertToTimeOfDay(closingTime);
+
+>>>>>>> Stashed changes
                             return GestureDetector(
                                 onTap: () {
                                     Navigator.push(

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RestaurantAllUnsorted {
+<<<<<<< Updated upstream
   Stream<List<Map<String, dynamic>>> getRestaurantData() {
     return FirebaseFirestore.instance.collection('restaurants').snapshots().map(
           (snapshot) {
@@ -11,6 +12,25 @@ class RestaurantAllUnsorted {
         }).toList();
       },
     );
+=======
+  Stream<List<Map<String, dynamic>>> getRestaurantData({String? keyword}) {
+    CollectionReference restaurants = FirebaseFirestore.instance.collection('restaurants');
+    Query query = restaurants;
+
+    if (keyword != null && keyword.isNotEmpty) {
+      query = query
+          .where('location', isEqualTo: keyword)
+          .where('menu_title', isEqualTo: keyword);
+    }
+
+    return query.snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        var data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    });
+>>>>>>> Stashed changes
   }
 }
 
@@ -46,6 +66,39 @@ class RestaurantLatestAdded {
     });
   }
 
+<<<<<<< Updated upstream
+=======
+class RestaurantSearch {
+  Stream<List<Map<String, dynamic>>> getRestaurantSearchOr({String? keyword}) async* {
+    var keywordLower = keyword?.toLowerCase();
+
+    if (keywordLower == null || keywordLower.isEmpty) {
+      yield [];
+      return;
+    }
+
+    //create both queries
+    var keywordsQuery = FirebaseFirestore.instance
+        .collection('restaurants')
+        .where('search_keywords', arrayContains: keywordLower);
+
+
+    //fetch both query snapshots
+    var keyWordsResults = await keywordsQuery.get();
+    // var shopNameResults = await shopNameQuery.get();
+
+    //combine results and map to a list of Maps
+    final results = <Map<String, dynamic>>{};
+
+    for (var doc in keyWordsResults.docs) {
+      var data = doc.data();
+      data['id'] = doc.id;
+      results.add(data);
+    }
+
+    yield results.toList();
+  }
+>>>>>>> Stashed changes
 }
 
 class RestaurantService {

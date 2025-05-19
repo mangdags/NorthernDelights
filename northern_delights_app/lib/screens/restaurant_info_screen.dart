@@ -50,7 +50,11 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
         'resto_view_count': FieldValue.increment(1),
       });
     } catch (e) {
+<<<<<<< Updated upstream
       print('Error incrementing view count: $e'); // For debugging only
+=======
+      print('Error incrementing view count: $e'); //for debugging
+>>>>>>> Stashed changes
     }
   }
 
@@ -88,7 +92,11 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
                   children: [
                     FoodPlaceInfoWidget(
                       restoID: widget.restaurantID,
+<<<<<<< Updated upstream
                       onLocationUpdated: _updateCoordinates, // Pass callback
+=======
+                      onLocationUpdated: _updateCoordinates,
+>>>>>>> Stashed changes
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -139,8 +147,27 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
                         ),
                       ],
                     ),
+<<<<<<< Updated upstream
                     _buildText(restoOverview),
                     SizedBox(height: 200),
+=======
+                    if (selectedTab == Tab.Overview) _buildText(restoOverview),
+                    if (selectedTab == Tab.Menu) _menuDetails(),
+                    if (selectedTab == Tab.Review) ... [
+                      _reviewDetails(),
+                      if(widget.isRegular) ... [
+                        const SizedBox(height: 20,),
+
+                        ElevatedButton(onPressed: () => Navigator.push(
+                            context, MaterialPageRoute(builder: (context) =>
+                            LeaveReviewScreen(collectionType: 'restaurants',restaurantGastropubId: widget.restaurantID)))
+                                .then((_) {getUserPoints();
+                            }),
+                          child: Text('Add Review'),),
+                      ],
+                    ],
+                    const SizedBox(height: 100),
+>>>>>>> Stashed changes
                   ],
                 ),
               );
@@ -241,13 +268,33 @@ class _RestaurantInfoState extends State<RestaurantInfo> {
 class FoodPlaceInfoWidget extends StatelessWidget {
   const FoodPlaceInfoWidget({
     required this.restoID,
-    required this.onLocationUpdated, // Accept the callback
+    required this.onLocationUpdated,
     super.key,
   });
 
   final String restoID;
-  final Function(double lat, double long) onLocationUpdated; // Callback definition
+  final Function(double lat, double long) onLocationUpdated;
 
+<<<<<<< Updated upstream
+=======
+  String convertToDateString(TimeOfDay? timeOfDay) {
+
+    if (timeOfDay == null) {
+      return '00:00';
+    }
+    final hours = timeOfDay.hourOfPeriod;
+    final minutes = timeOfDay.minute;
+    final period = timeOfDay.period == DayPeriod.am ? 'AM' : 'PM';
+
+    return '$hours:${minutes.toString().padLeft(2, '0')} $period';
+  }
+
+  TimeOfDay convertToTimeOfDay(Timestamp timestamp) {
+    final dateTime = timestamp.toDate();
+    return TimeOfDay(hour: dateTime.hour, minute: dateTime.minute);
+  }
+
+>>>>>>> Stashed changes
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DocumentSnapshot>(
@@ -267,9 +314,9 @@ class FoodPlaceInfoWidget extends StatelessWidget {
         double lat = geoPoint.latitude;
         double long = geoPoint.longitude;
 
-        // Call the callback to update the parent widget's state
         onLocationUpdated(lat, long);
 
+<<<<<<< Updated upstream
         return Container(
           margin: EdgeInsets.only(top: 30, left: 20, right: 20),
           child: Stack(
@@ -288,6 +335,78 @@ class FoodPlaceInfoWidget extends StatelessWidget {
                       offset: const Offset(0.0, 4),
                       blurRadius: 8,
                       spreadRadius: 1,
+=======
+        return SafeArea(
+          child: Container(
+            margin: EdgeInsets.only(top: 30, left: 20, right: 20),
+            child: Stack(
+              alignment: Alignment.bottomCenter,
+              children: [
+                Container(
+                  width: screenWidth! - 40,
+                  height: 500,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.all(Radius.circular(20)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        offset: const Offset(0.0, 4),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: FutureBuilder<DocumentSnapshot>(
+                      future: FirebaseFirestore.instance.collection('users').doc(restoID).get(),
+                      builder: (context, userSnapshot) {
+                        if (!userSnapshot.hasData) {
+                          return Center(child: CircularProgressIndicator());
+                        }
+
+                        final userData = userSnapshot.data!.data() as Map<String, dynamic>;
+                        final imageUrls = userData['image_urls'] as List<dynamic>?;
+
+                        if (imageUrls != null && imageUrls.isNotEmpty) {
+                          return CarouselSlider(
+                            options: CarouselOptions(
+                              height: 500,
+                              enlargeCenterPage: true,
+                              enableInfiniteScroll: true,
+                              viewportFraction: 1.0,
+                              autoPlay: true,
+                            ),
+                            items: imageUrls.map((url) {
+                              return CachedNetworkImage(
+                                  imageUrl: url,
+                                  fit: BoxFit.cover,
+                                  width: MediaQuery.of(context).size.width,
+                                  errorWidget: (context, url, error) => Container(
+                                    alignment: Alignment.center,
+                                    color: Colors.grey[200],
+                                    child: Image.asset(
+                                        'assets/images/store.png',
+                                        fit: BoxFit.contain,
+                                        width: 220,
+                                        height: 350),
+                                  ),
+                                  placeholder: (context, url) => Center(
+                                  child: CircularProgressIndicator())
+                              );
+                            }).toList(),
+                          );
+                        } else {
+                          return Image.asset(
+                            'assets/images/store.png',
+                            fit: BoxFit.contain,
+                            width: 220,
+                            height: 350,
+                          );
+                        }
+                      },
+>>>>>>> Stashed changes
                     ),
                   ],
                 ),

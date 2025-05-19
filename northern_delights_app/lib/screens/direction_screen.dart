@@ -26,7 +26,7 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
 
   @override
   void dispose() {
-    _locationSubscription?.cancel(); // Cancel location listener when disposed
+    _locationSubscription?.cancel(); //cancel location listener when disposed
     super.dispose();
   }
 
@@ -34,7 +34,7 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
   void initState() {
     super.initState();
     _checkPermissions();
-    _getCurrentLocation(); // Get current location
+    _getCurrentLocation(); //get current location
     _addDestinationMarker();
   }
 
@@ -86,11 +86,10 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
           setState(() {
             _currentLocation = LatLng(locationData.latitude!, locationData.longitude!);
           });
-          //_controller?.animateCamera(CameraUpdate.newLatLng(_currentLocation!)); // Optional: update camera on location change
         }
       });
     } catch (e) {
-      print('Error getting location: $e'); // For debugging only
+      print('Error getting location: $e'); //for debugging
     }
   }
 
@@ -119,7 +118,12 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
     }
   }
 
+<<<<<<< Updated upstream
   // Method to decode polyline string to LatLng points
+=======
+
+  //method to decode polyline string to LatLng points
+>>>>>>> Stashed changes
   List<LatLng> _decodePoly(String poly) {
     var list = poly.codeUnits;
     List<LatLng> coordinates = [];
@@ -131,11 +135,11 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
       int shift = 0;
       int result = 0;
       do {
-        b = list[index++] - 63; // Convert to base64
+        b = list[index++] - 63;
         result |= (b & 0x1f) << shift;
         shift += 5;
       } while (b >= 0x20);
-      int dlat = (result >> 1) ^ (~(result & 1) + 1); // Zigzag decoding
+      int dlat = (result >> 1) ^ (~(result & 1) + 1);
       lat += dlat;
 
       shift = 0;
@@ -157,7 +161,13 @@ class _DirectionsMapScreenState extends State<DirectionsMapScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Directions to ${widget.destinationName}")),
+<<<<<<< Updated upstream
       body: GoogleMap(
+=======
+      body: _currentLocation == null
+          ? Center(child: CircularProgressIndicator()) //loading indicator
+          : GoogleMap(
+>>>>>>> Stashed changes
         initialCameraPosition: CameraPosition(
           target: _currentLocation ?? LatLng(0, 0), // (0, 0) as fallback
           zoom: 14,

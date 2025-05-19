@@ -10,7 +10,7 @@ class _MapScreenState extends State<MapScreen> {
   GoogleMapController? _controller;
 
   final CameraPosition _initialLocation = CameraPosition(
-    target: LatLng(18.19547309864416, 120.5927121184848), // Sample location
+    target: LatLng(18.19547309864416, 120.5927121184848), //sample loc
     zoom: 16,
   );
 

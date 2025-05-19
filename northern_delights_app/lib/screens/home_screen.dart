@@ -174,6 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+<<<<<<< Updated upstream
  Widget buildCategoryButton(String label, Color bgColor, Color textColor) {
   return ElevatedButton(
     style: ButtonStyle(
@@ -217,5 +218,211 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+=======
+  Future<void> _searchMenu(String keyword) async {
+    if (keyword.isEmpty) {
+      setState(() {
+        _searchResult = '';
+      });
+
+      return;
+    } else {
+      _searchKeyword = keyword;
+    }
+
+    QuerySnapshot gastropubsSnapshot = await FirebaseFirestore.instance
+        .collection('gastropubs')
+        .where('name', isGreaterThanOrEqualTo: keyword)
+        .where('name', isLessThanOrEqualTo: '${keyword}\uf8ff')
+        .get();
+
+    QuerySnapshot restaurantsSnapshot = await FirebaseFirestore.instance
+        .collection('restaurants')
+        .where('name', isGreaterThanOrEqualTo: keyword)
+        .where('name', isLessThanOrEqualTo: '${keyword}\uf8ff')
+        .get();
+
+    setState(() {
+      _searchResult = keyword;
+    });
+  }
+
+
+  Future<void> fetchUserData() async {
+    String? role = await fetchRole();
+
+    if (role == 'admin'){
+      userData = await getUserByID('users');
+
+      setState(() {
+        firstName = userData?['first_name'] ?? '';
+        lastName = userData?['last_name'] ?? '';
+        shopName = userData?['shop_name'] ?? '';
+        isAdmin = true;
+        isSeller = false;
+      });
+    } else if (role == 'seller'){
+
+      userData = await getSellerByID('gastropubs');
+      if (userData == null) {
+        userData = await getSellerByID('restaurants');
+        storeType = 'restaurants';
+      }else{
+        storeType = 'gastropubs';
+      }
+
+      if (userData != null) {
+        setState(() {
+          firstName = userData?['first_name'] ?? '';
+          lastName = userData?['last_name'] ?? '';
+          shopName = userData?['shop_name'] ?? '';
+          points = userData?['points'] ?? 0;
+        });
+      } else {
+        setState(() {
+          firstName = '';
+          lastName = '';
+          shopName = '';
+          points = 0;
+
+          return;
+        });
+      }
+      isAdmin = false;
+      isSeller = true;
+    } else {
+      userData = await getUserByID('users');
+
+      setState(() {
+        firstName = userData?['first_name'] ?? '';
+        lastName = userData?['last_name'] ?? '';
+        points = userData?['points'] ?? 0;
+        isAdmin = false;
+
+      });
+    }
+  }
+
+//helper methods for querying Firestore
+  Future<Map<String, dynamic>?> getGastropubInfoByID() async {
+    try {
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
+          .collection('gastropubs')
+          .doc(userID)
+          .get();
+
+      return snapshot.exists ? snapshot.data() as Map<String, dynamic> : null;
+    } catch (e) {
+      print("Error fetching gastropub data: $e");
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getRestaurantInfoByID() async {
+    try {
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
+          .collection('restaurants')
+          .doc(userID)
+          .get();
+
+      return snapshot.exists ? snapshot.data() as Map<String, dynamic> : null;
+    } catch (e) {
+      print("Error fetching restaurant data: $e");
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getSellerByID(String collect) async {
+    try {
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
+          .collection(collect)
+          .doc(userID)
+          .get();
+
+      return snapshot.exists ? snapshot.data() as Map<String, dynamic> : null;
+
+    } catch (e) {
+      print("Error fetching user data: $e");
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getUserByID(String collect) async {
+    try {
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
+          .collection(collect)
+          .doc(userID)
+          .get();
+
+      return snapshot.exists ? snapshot.data() as Map<String, dynamic> : null;
+
+    } catch (e) {
+      print("Error fetching user data: $e");
+      return null;
+    }
+  }
+
+
+  Future<String> fetchRole() async {
+    try {
+      if (userID!.isEmpty) {
+        print('Error: userId is empty.');
+        return 'err: invalid_userID';
+      }
+
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userID)
+          .get();
+
+      if (snapshot.exists) {
+        final data = snapshot.data() as Map<String, dynamic>;
+        if (data['isAdmin'] == true) {
+          return 'admin';
+        } else if (data['isSeller'] == true) {
+          return 'seller';
+        } else {
+          return 'regular';
+        }
+      } else {
+        return 'regular';
+      }
+    } catch (e) {
+      print('Error fetching user role: $e');
+      return 'err: no_role';
+    }
+  }
+
+  Future<void> signOut() async {
+    bool confirmLogout = await showConfirmationDialog(context, "Logout", "Are you sure you want to logout?");
+
+    if(confirmLogout) {
+      await FirebaseAuth.instance.signOut();
+      Navigator.push(
+          context, MaterialPageRoute(builder: (context) => SigninScreen()));
+    }
+  }
+
+  Future<bool> showConfirmationDialog(BuildContext context, String title, String content) async {
+    return await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(content),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false), //cancel
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true), //confirm
+              child: Text('Yes'),
+            ),
+          ],
+        );
+      },
+    ) ?? false; //return false if dialog is dismissed
+>>>>>>> Stashed changes
   }
 }

@@ -1,30 +1,27 @@
 import 'dart:ui';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:northern_delights_app/models/restaurant_doc_data.dart';
 import 'package:northern_delights_app/screens/restaurant_info_screen.dart';
 
-class RestaurantsCard extends StatefulWidget {
-  final String selectedCategory;
-<<<<<<< Updated upstream
-=======
+class RestaurantsCardSearch extends StatefulWidget {
   final String? searchKeyword;
-  final Map<String, dynamic>? restoData;
   final bool isRegular;
   final bool isAdmin;
->>>>>>> Stashed changes
 
-  const RestaurantsCard({super.key, required this.selectedCategory});
+  const RestaurantsCardSearch({super.key,
+    this.searchKeyword,
+    required this.isRegular, required this.isAdmin});
 
   @override
-  _RestaurantsCardState createState() => _RestaurantsCardState();
+  _RestaurantsCardSearchState createState() => _RestaurantsCardSearchState();
 }
 
-class _RestaurantsCardState extends State<RestaurantsCard> {
-  final RestaurantService restaurantService = RestaurantService();
+class _RestaurantsCardSearchState extends State<RestaurantsCardSearch> {
+  final RestaurantSearch restaurantSearch = RestaurantSearch();
 
-<<<<<<< Updated upstream
-=======
   late Timestamp openingTime;
   late Timestamp closingTime;
   late TimeOfDay openTimeOfDay;
@@ -60,26 +57,33 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
     }
   }
 
->>>>>>> Stashed changes
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         StreamBuilder<List<Map<String, dynamic>>>(
-          stream: restaurantService.getStream(widget.selectedCategory),
+          stream: restaurantSearch.getRestaurantSearchOr(keyword: widget.searchKeyword),
           builder: (context, snapshot) {
-            print(widget.selectedCategory);
+
             if (!snapshot.hasData) {
               return Center(child: CircularProgressIndicator());
             }
 
             var restoList = snapshot.data!.map((resto) {
+
+              openingTime = resto['open_time'];
+              closingTime = resto['close_time'];
+
+              openTimeOfDay = convertToTimeOfDay(openingTime);
+              closeTimeOfDay = convertToTimeOfDay(closingTime);
               return GestureDetector(
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => RestaurantInfo(
+                        isRegular: widget.isRegular,
+                        isAdmin: widget.isAdmin,
                         restaurantID: resto['id'],
                       ),
                     ),
@@ -104,26 +108,68 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(20),
-                            child: Image.network(
-                              resto['resto_image_url'],
-                              fit: BoxFit.cover,
-                              width: 220,
-                              height: 300,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  width: 220,
-                                  height: 300,
-                                  alignment: Alignment.center,
-                                  child: Icon(
-                                    Icons.error,
-                                    size: 220,
-                                    color: Colors.red,
-                                  ),
-                                );
+                            child: FutureBuilder<DocumentSnapshot>(
+                              future: FirebaseFirestore.instance.collection('users').doc(resto['id']).get(),
+                              builder: (context, userSnapshot) {
+                                if (!userSnapshot.hasData) {
+                                  return Center(child: CircularProgressIndicator());
+                                }
+
+                                final userData = userSnapshot.data!.data() as Map<String, dynamic>;
+                                final imageUrls = userData['image_urls'] as List<dynamic>?;
+                                final firstImageUrl = imageUrls != null && imageUrls.isNotEmpty ? imageUrls[0] as String : null;
+
+
+                                if (firstImageUrl != null && firstImageUrl.isNotEmpty) {
+
+                                  return CachedNetworkImage(imageUrl: firstImageUrl,
+                                    fit: BoxFit.cover,
+                                    width: 220,
+                                    height: 300,
+                                    placeholder: (context, url) => Center(child: CircularProgressIndicator()),
+                                    errorWidget: (context, url, error) => Container(
+                                      alignment: Alignment.center,
+                                      color: Colors.grey[200],
+                                      child: Image.asset(
+                                          'assets/images/store.png',
+                                          fit: BoxFit.contain,
+                                          width: 220,
+                                          height: 350),
+                                    ),);
+                                } else {
+                                  return Image.asset(
+                                    'assets/images/store.png',
+                                    fit: BoxFit.contain,
+                                    width: 220,
+                                    height: 350,
+                                  );
+                                }
                               },
                             ),
                           ),
                         ),
+
+                        if (isStoreClosed(openTimeOfDay, closeTimeOfDay, now))...[
+
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.6),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  'Closed',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                         Positioned(
                           bottom: 10,
                           left: 5,
@@ -134,7 +180,7 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
                               child: Container(
                                 padding: EdgeInsets.all(10),
                                 width: 210,
-                                height: 90,
+                                height: 110,
                                 decoration: BoxDecoration(
                                   color: Colors.black.withOpacity(0.3),
                                   borderRadius: BorderRadius.circular(10),
@@ -143,7 +189,7 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      resto['resto_name'],
+                                      resto['name'],
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
@@ -156,17 +202,21 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
                                       children: [
                                         SvgPicture.asset(
                                           'assets/icons/location-pin.svg',
-                                          height: 20,
-                                          width: 20,
+                                          height: 15,
+                                          width: 15,
                                           colorFilter: ColorFilter.mode(
                                               Colors.white70, BlendMode.srcIn),
                                         ),
-                                        SizedBox(width: 5),
-                                        Text(
-                                          resto['resto_location'],
-                                          style: TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 12,
+                                        SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            overflow: TextOverflow.fade,
+                                            maxLines: 1,
+                                            resto['location'],
+                                            style: TextStyle(
+                                              color: Colors.white70,
+                                              fontSize: 12,
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -183,7 +233,38 @@ class _RestaurantsCardState extends State<RestaurantsCard> {
                                         ),
                                         SizedBox(width: 8),
                                         Text(
-                                          resto['resto_rating'].toString(),
+                                          resto['rating'].toString(),
+                                          style: TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 3),
+                                    Row(
+                                      children: [
+                                        Icon(Icons.access_time_outlined, color: Colors.white70,size: 16),
+
+                                        SizedBox(width: 8),
+                                        Text(
+                                          convertToDateString(openTimeOfDay),
+                                          style: TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          '-',
+                                          style: TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          convertToDateString(closeTimeOfDay),
                                           style: TextStyle(
                                             color: Colors.white70,
                                             fontSize: 12,
